@@ -1,0 +1,372 @@
+// BreathingController.mc
+// Breathing state machine with session plan orchestration.
+
+using Toybox.Lang;
+using Toybox.Math;
+using Toybox.System;
+
+module BreathingPhase {
+    enum {
+        PHASE_PREPARE,
+        PHASE_INHALE,
+        PHASE_HOLD,
+        PHASE_EXHALE,
+        PHASE_COMPLETE
+    }
+}
+
+class BreathingController {
+    private var _plan;
+    private var _blocks;
+
+    private var _blockIndex;
+    private var _cycleIndex;
+    private var _phaseIndex;
+
+    private var _phase;
+    private var _phaseDuration;
+    private var _phaseElapsed;
+
+    private var _sessionElapsed;
+    private var _sessionDuration;
+
+    private var _running;
+    private var _paused;
+    private var _hasStarted;
+
+    function initialize() {
+        _plan = getDefaultPlan();
+        _rebuildPlan();
+    }
+
+    function reset() {
+        _running = false;
+        _paused = false;
+        _hasStarted = false;
+
+        _blockIndex = 0;
+        _cycleIndex = 0;
+        _phaseIndex = 0;
+
+        _phase = BreathingPhase.PHASE_PREPARE;
+        _phaseDuration = 0.01;
+        _phaseElapsed = 0.0;
+
+        _sessionElapsed = 0.0;
+    }
+
+    function setPlan(plan) {
+        if (plan == null || plan.size() == 0) {
+            System.println("BreathingController: empty plan provided, falling back to default.");
+            _plan = getDefaultPlan();
+        } else {
+            _plan = plan;
+        }
+        _rebuildPlan();
+    }
+
+    function getPlan() { return _plan; }
+
+    function start() {
+        if (_blocks == null || _blocks.size() == 0) {
+            _rebuildPlan();
+        }
+
+        _hasStarted = true;
+        _running = true;
+        _paused = false;
+
+        _blockIndex = 0;
+        _cycleIndex = 0;
+        _phaseIndex = 0;
+
+        _phase = BreathingPhase.PHASE_INHALE;
+        _phaseDuration = _durationForPhase(_phase);
+        _phaseElapsed = 0.0;
+        _sessionElapsed = 0.0;
+    }
+
+    function pause() { if (_running) { _paused = true; } }
+    function resume() { if (_running && _paused) { _paused = false; } }
+    function stop() { _running = false; _paused = false; }
+
+    function isRunning() { return _running && !_paused && _phase != BreathingPhase.PHASE_COMPLETE; }
+    function isPaused() { return _paused; }
+    function hasStarted() { return _hasStarted; }
+    function isComplete() { return _phase == BreathingPhase.PHASE_COMPLETE; }
+
+    function getSessionDuration() { return _sessionDuration; }
+    function getSessionElapsed() { return _sessionElapsed; }
+    function getPhase() { return _phase; }
+    function getPhaseDuration() { return _phaseDuration; }
+    function getPhaseElapsed() { return _phaseElapsed; }
+
+    function getPhaseProgress() {
+        if (_phaseDuration <= 0.0) { return 1.0; }
+        var progress = _phaseElapsed / _phaseDuration;
+        if (progress < 0.0) { progress = 0.0; }
+        if (progress > 1.0) { progress = 1.0; }
+        return progress;
+    }
+
+    function getPhaseRemaining() {
+        var remaining = _phaseDuration - _phaseElapsed;
+        if (remaining < 0.0) { remaining = 0.0; }
+        return remaining;
+    }
+
+    function getSessionProgress() {
+        if (_sessionDuration <= 0.0) { return 0.0; }
+        var progress = _sessionElapsed / _sessionDuration;
+        if (progress < 0.0) { progress = 0.0; }
+        if (progress > 1.0) { progress = 1.0; }
+        return progress;
+    }
+
+    function getCurrentPattern() {
+        var block = _currentBlock();
+        if (block != null && block.hasKey("pattern")) {
+            return block["pattern"];
+        }
+        return null;
+    }
+
+    function getCurrentBlockLabel() {
+        var block = _currentBlock();
+        if (block != null && block.hasKey("label")) {
+            return block["label"];
+        }
+        return "";
+    }
+
+    function advance(dt) {
+        if (!_running || _paused || dt <= 0.0) {
+            return _buildState(false, false, false);
+        }
+
+        _phaseElapsed += dt;
+        _sessionElapsed += dt;
+        if (_sessionElapsed > _sessionDuration) {
+            _sessionElapsed = _sessionDuration;
+        }
+
+        var phaseChanged = false;
+        var blockChanged = false;
+        var cycleChanged = false;
+
+        while (_phase != BreathingPhase.PHASE_COMPLETE && _phaseElapsed >= _phaseDuration) {
+            _phaseElapsed -= _phaseDuration;
+            if (_phaseElapsed < 0.0) { _phaseElapsed = 0.0; }
+
+            var change = _advancePhase();
+            if (change["phaseChanged"]) { phaseChanged = true; }
+            if (change["blockChanged"]) { blockChanged = true; }
+            if (change["cycleChanged"]) { cycleChanged = true; }
+
+            if (_phase == BreathingPhase.PHASE_COMPLETE) {
+                break;
+            }
+        }
+
+        return _buildState(phaseChanged, blockChanged, cycleChanged);
+    }
+
+    // ----- Internal helpers -------------------------------------------------
+
+    private function _buildState(phaseChanged, blockChanged, cycleChanged) {
+        var state = {
+            "phase" => _phase,
+            "phaseProgress" => getPhaseProgress(),
+            "phaseRemaining" => getPhaseRemaining(),
+            "phaseDuration" => _phaseDuration,
+            "sessionElapsed" => _sessionElapsed,
+            "sessionDuration" => _sessionDuration,
+            "sessionProgress" => getSessionProgress(),
+            "blockIndex" => _blockIndex,
+            "cycleIndex" => _cycleIndex,
+            "phaseChanged" => phaseChanged,
+            "blockChanged" => blockChanged,
+            "cycleChanged" => cycleChanged,
+            "isComplete" => (_phase == BreathingPhase.PHASE_COMPLETE)
+        };
+
+        var block = _currentBlock();
+        if (block != null) {
+            state["blockLabel"] = block.hasKey("label") ? block["label"] : "";
+            state["blockDuration"] = block.hasKey("blockDuration") ? block["blockDuration"] : 0.0;
+            state["cyclesInBlock"] = block.hasKey("cycles") ? block["cycles"] : 0;
+            if (block.hasKey("pattern")) {
+                var pattern = block["pattern"];
+                state["pattern"] = pattern;
+                state["inhale"] = pattern["inhale"];
+                state["hold"] = pattern["hold"];
+                state["exhale"] = pattern["exhale"];
+            }
+        }
+
+        return state;
+    }
+
+    private function _advancePhase() {
+        var change = {
+            "phaseChanged" => false,
+            "blockChanged" => false,
+            "cycleChanged" => false
+        };
+
+        _phaseIndex += 1;
+        if (_phaseIndex > 2) {
+            _phaseIndex = 0;
+            _cycleIndex += 1;
+            change["cycleChanged"] = true;
+
+            var block = _currentBlock();
+            var cycles = (block != null && block.hasKey("cycles")) ? block["cycles"] : 1;
+            if (_cycleIndex >= cycles) {
+                _blockIndex += 1;
+                _cycleIndex = 0;
+                change["blockChanged"] = true;
+
+                if (_blockIndex >= _blocks.size()) {
+                    _setComplete();
+                    change["phaseChanged"] = true;
+                    return change;
+                }
+            }
+        }
+
+        _setPhase(_phaseForIndex(_phaseIndex));
+        change["phaseChanged"] = true;
+        return change;
+    }
+
+    private function _setPhase(newPhase) {
+        _phase = newPhase;
+        if (_phase == BreathingPhase.PHASE_COMPLETE) {
+            _phaseDuration = 0.01;
+            _phaseElapsed = 0.0;
+            _running = false;
+            _paused = false;
+            return;
+        }
+
+        _phaseDuration = _durationForPhase(newPhase);
+        if (_phaseDuration <= 0.0) {
+            _phaseDuration = 1.0;
+        }
+    }
+
+    private function _setComplete() {
+        _phase = BreathingPhase.PHASE_COMPLETE;
+        _phaseDuration = 0.01;
+        _phaseElapsed = 0.0;
+        _sessionElapsed = _sessionDuration;
+        _running = false;
+        _paused = false;
+    }
+
+    private function _phaseForIndex(index) {
+        if (index == 0) { return BreathingPhase.PHASE_INHALE; }
+        if (index == 1) { return BreathingPhase.PHASE_HOLD; }
+        if (index == 2) { return BreathingPhase.PHASE_EXHALE; }
+        return BreathingPhase.PHASE_PREPARE;
+    }
+
+    private function _currentBlock() {
+        if (_blocks != null && _blockIndex >= 0 && _blockIndex < _blocks.size()) {
+            return _blocks[_blockIndex];
+        }
+        return null;
+    }
+
+    private function _durationForPhase(phase) {
+        var pattern = getCurrentPattern();
+        if (pattern == null) { return 1.0; }
+
+        if (phase == BreathingPhase.PHASE_INHALE) {
+            return pattern["inhale"];
+        } else if (phase == BreathingPhase.PHASE_HOLD) {
+            return pattern["hold"];
+        } else if (phase == BreathingPhase.PHASE_EXHALE) {
+            return pattern["exhale"];
+        }
+        return 1.0;
+    }
+
+    private function _rebuildPlan() {
+        _blocks = [];
+        _sessionDuration = 0.0;
+
+        if (_plan == null) {
+            _plan = getDefaultPlan();
+        }
+
+        for (var i = 0; i < _plan.size(); i += 1) {
+            var block = _plan[i];
+            if (block == null || !block.hasKey("pattern")) { continue; }
+
+            var pattern = block["pattern"];
+            if (pattern == null) { continue; }
+
+            var inhale = _safeFloat(pattern, "inhale", 4.0);
+            var hold = _safeFloat(pattern, "hold", 4.0);
+            var exhale = _safeFloat(pattern, "exhale", 5.0);
+            var cycleDuration = inhale + hold + exhale;
+            if (cycleDuration <= 0.0) { cycleDuration = 1.0; }
+
+            var minutes = _safeFloat(block, "minutes", 1.0);
+            var blockSeconds = minutes * 60.0;
+            if (blockSeconds <= 0.0) { blockSeconds = cycleDuration; }
+
+            var cyclesFloat = blockSeconds / cycleDuration;
+            var cycles = Math.floor(cyclesFloat).toNumber();
+            if (cycles < 1) { cycles = 1; }
+
+            var blockDuration = cycleDuration * cycles;
+            _sessionDuration += blockDuration;
+
+            var meta = {
+                "label" => block.hasKey("label") ? block["label"] : "",
+                "pattern" => {
+                    "inhale" => inhale,
+                    "hold" => hold,
+                    "exhale" => exhale
+                },
+                "cycles" => cycles,
+                "cycleDuration" => cycleDuration,
+                "blockDuration" => blockDuration
+            };
+
+            _blocks.add(meta);
+        }
+
+        reset();
+    }
+
+    private function _safeFloat(src, key, fallback) {
+        if (src != null && src.hasKey(key)) {
+            var raw = src[key];
+            if (raw != null) {
+                if (raw instanceof Float) { return raw; }
+                if (raw instanceof Number) { return (raw).toFloat(); }
+            }
+        }
+        return fallback;
+    }
+
+    // Default session plan: 1 minute ramp + 4 minute main 4-7-8 pattern
+    function getDefaultPlan() {
+        return [
+            {
+                "label" => "Ramp 4-4-5",
+                "minutes" => 1.0,
+                "pattern" => { "inhale" => 4.0, "hold" => 4.0, "exhale" => 5.0 }
+            },
+            {
+                "label" => "4-7-8",
+                "minutes" => 4.0,
+                "pattern" => { "inhale" => 4.0, "hold" => 7.0, "exhale" => 8.0 }
+            }
+        ];
+    }
+}

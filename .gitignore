@@ -1,0 +1,25 @@
+# Garmin Connect IQ Build Artifacts
+bin/
+*.prg
+*.iq
+
+# Debug Logs
+debug_logs/
+*.log
+
+# IDE / Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary Files
+*.tmp
+*.bak
+*.cache

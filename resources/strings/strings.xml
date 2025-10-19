@@ -1,0 +1,19 @@
+<resources>
+    <strings>
+        <string id="AppName">4-7-8 Breathing</string>
+        <string id="TapInstruction">Tap to Begin</string>
+        <string id="PillReady">Ready</string>
+        <string id="PillInhale">Inhale</string>
+        <string id="PillHold">Hold</string>
+        <string id="PillExhale">Exhale</string>
+        <string id="PillPaused">Paused</string>
+        <string id="PillComplete">Session Complete</string>
+        <string id="PhasePrepare">Prepare</string>
+        <string id="PhaseInhale">Inhale</string>
+        <string id="PhaseHold">Hold</string>
+        <string id="PhaseExhale">Exhale</string>
+        <string id="PhaseComplete">Complete</string>
+        <string id="OutroHeadline">Well Done</string>
+        <string id="OutroMessage">Enjoy a calm night&#39;s sleep</string>
+    </strings>
+</resources>

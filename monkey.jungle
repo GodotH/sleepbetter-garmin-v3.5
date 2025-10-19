@@ -1,0 +1,11 @@
+project.manifest = manifest.xml
+
+# Source files
+base.sourcePath = source
+
+# Resources
+base.resourcePath = resources
+
+# Default build configuration
+venu3.resourcePath = $(venu3.resourcePath);resources-venu3
+venu3s.resourcePath = $(venu3s.resourcePath);resources-venu3s

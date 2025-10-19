@@ -1,0 +1,49 @@
+<layout id="MainLayout">
+    <label id="TitleLabel"
+           x="center"
+           y="10%"
+           text="@Strings.AppName"
+           color="0xFFE5E5"
+           font="Gfx.FONT_MEDIUM"
+           justification="Gfx.TEXT_JUSTIFY_CENTER"/>
+
+    <label id="TotalLabel"
+           x="center"
+           y="20%"
+           text="0:00"
+           color="0xC7A9A9"
+           font="Gfx.FONT_SMALL"
+           justification="Gfx.TEXT_JUSTIFY_CENTER"/>
+
+    <label id="PhaseLabel"
+           x="center"
+           y="32%"
+           text="@Strings.PhasePrepare"
+           color="0xFFE5E5"
+           font="Gfx.FONT_MEDIUM"
+           justification="Gfx.TEXT_JUSTIFY_CENTER"/>
+
+    <label id="CountdownLabel"
+           x="center"
+           y="45%"
+           text="0"
+           color="0xFFE5E5"
+           font="Gfx.FONT_NUMBER_HOT"
+           justification="Gfx.TEXT_JUSTIFY_CENTER"/>
+
+    <label id="BlockLabel"
+           x="center"
+           y="58%"
+           text=""
+           color="0xC7A9A9"
+           font="Gfx.FONT_SMALL"
+           justification="Gfx.TEXT_JUSTIFY_CENTER"/>
+
+    <label id="HintLabel"
+           x="center"
+           y="88%"
+           text="@Strings.TapInstruction"
+           color="0xC7A9A9"
+           font="Gfx.FONT_SMALL"
+           justification="Gfx.TEXT_JUSTIFY_CENTER"/>
+</layout>

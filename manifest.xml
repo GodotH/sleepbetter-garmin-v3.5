@@ -1,0 +1,18 @@
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="1">
+  <iq:application
+      id="a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"
+      type="watch-app"
+      entry="SleepBetterApp"
+      name="@Strings.AppName"
+      minSdkVersion="5.2.0"
+      launcherIcon="@Drawables.LauncherIcon">
+    <iq:products>
+      <iq:product id="venu3"/>
+      <iq:product id="venu3s"/>
+    </iq:products>
+    <iq:permissions/>
+    <iq:languages>
+      <iq:language>en</iq:language>
+    </iq:languages>
+  </iq:application>
+</iq:manifest>
