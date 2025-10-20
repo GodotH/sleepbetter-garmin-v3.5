@@ -40,6 +40,15 @@ class SleepBetterView extends WatchUi.View {
     const COLOR_PILL_BACKGROUND = 0x7A1515;
     const COLOR_PILL_BORDER = 0xE43A3A;
     const COLOR_OVERLAY_FILL = 0x401010;
+    const COLOR_WATERMARK = 0xFF6B6B;
+
+    // Font constants for canvas text rendering
+    const FONT_SIZE_TITLE = Gfx.FONT_SMALL;
+    const FONT_SIZE_PILL = Gfx.FONT_TINY;
+    const FONT_SIZE_PHASE_WATERMARK = Gfx.FONT_LARGE;
+    const FONT_SIZE_COUNTDOWN = Gfx.FONT_NUMBER_THAI_HOT;
+    const FONT_SIZE_TIMER = Gfx.FONT_SMALL;
+    const FONT_SIZE_PATTERN = Gfx.FONT_TINY;
 
     private var _controller;
     private var _timer;
@@ -406,6 +415,12 @@ class SleepBetterView extends WatchUi.View {
 
         Effects.drawSphere(dc, _centerX, _centerY, _currentRadius, COLOR_SPHERE_CORE, COLOR_SPHERE_RIM, COLOR_SPHERE_HIGHLIGHT);
 
+        // UI Text (order matters for z-index)
+        _drawTitle(dc);                    // Top title
+        _drawPhaseWatermark(dc);           // Behind countdown (low opacity)
+        _drawCountdown(dc);                // Center countdown (high opacity)
+        _drawTimers(dc);                   // Total time + pattern
+
         if (_state == AppState.STATE_IDLE) {
             Effects.drawPlayHint(dc, _centerX, _centerY, _currentRadius, COLOR_TEXT_MUTED);
         }
@@ -444,7 +459,76 @@ class SleepBetterView extends WatchUi.View {
         );
     }
 
-    // _updateLabels() and _setLabel() removed - using canvas rendering
+    // Canvas text rendering methods
+    private function _drawTitle(dc) {
+        dc.setColor(COLOR_TEXT_PRIMARY, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            _centerX.toNumber(),
+            (_height * 0.04).toNumber(),
+            FONT_SIZE_TITLE,
+            "4-7-8 Red Breathing",
+            Gfx.TEXT_JUSTIFY_CENTER
+        );
+    }
+
+    private function _drawPhaseWatermark(dc) {
+        // Only show during active session
+        if (_state != AppState.STATE_RUNNING && _state != AppState.STATE_PAUSED) {
+            return;
+        }
+
+        // Phase watermark appears behind countdown with low opacity
+        // MonkeyC doesn't support alpha in colors directly, so we use a dimmer version
+        dc.setColor(COLOR_WATERMARK, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            _centerX.toNumber(),
+            _centerY.toNumber(),
+            FONT_SIZE_PHASE_WATERMARK,
+            _phaseText,
+            Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+        );
+    }
+
+    private function _drawCountdown(dc) {
+        // Only show during active session
+        if (_state != AppState.STATE_RUNNING && _state != AppState.STATE_PAUSED) {
+            return;
+        }
+
+        dc.setColor(COLOR_TEXT_PRIMARY, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            _centerX.toNumber(),
+            _centerY.toNumber(),
+            FONT_SIZE_COUNTDOWN,
+            _countdownText,
+            Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+        );
+    }
+
+    private function _drawTimers(dc) {
+        // Total timer (above sphere)
+        var totalY = _centerY - (_sphereMax * 1.35);
+        dc.setColor(COLOR_TEXT_MUTED, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            _centerX.toNumber(),
+            totalY.toNumber(),
+            FONT_SIZE_TIMER,
+            _totalText,
+            Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+        );
+
+        // Pattern display (below sphere)
+        if (_blockText != null && _blockText.length() > 0) {
+            var patternY = _centerY + (_sphereMax * 1.35);
+            dc.drawText(
+                _centerX.toNumber(),
+                patternY.toNumber(),
+                FONT_SIZE_PATTERN,
+                _blockText,
+                Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+            );
+        }
+    }
 
     private function _phaseString(phase) {
         if (phase == BreathingPhase.PHASE_INHALE) {
