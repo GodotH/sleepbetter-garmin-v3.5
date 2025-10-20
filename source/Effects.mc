@@ -25,46 +25,62 @@ module Effects {
         if (clamped < 0.0) { clamped = 0.0; }
         if (clamped > 1.0) { clamped = 1.0; }
 
-        dc.setPenWidth(thickness.toNumber());
+        var x = cx.toNumber();
+        var y = cy.toNumber();
+        var r = radius.toNumber();
+        var t = thickness.toNumber();
+
+        // Background track
+        dc.setPenWidth(t);
         dc.setColor(trackColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawCircle(cx.toNumber(), cy.toNumber(), radius.toNumber());
+        dc.drawCircle(x, y, r);
 
         if (clamped <= 0.0) {
             return;
         }
 
         var sweep = 360.0 * clamped;
+        var endAngle = (90 - sweep).toNumber();
+
+        // Glow layer (slightly larger, dimmer) for depth
+        dc.setColor(0x7E1717, Gfx.COLOR_TRANSPARENT);
+        dc.setPenWidth(t + 4);
+        dc.drawArc(x, y, r + 2, Gfx.ARC_CLOCKWISE, 90, endAngle);
+
+        // Main progress arc (pure red)
         dc.setColor(fillColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawArc(
-            cx.toNumber(),
-            cy.toNumber(),
-            radius.toNumber(),
-            Gfx.ARC_CLOCKWISE,
-            90,
-            (90 - sweep).toNumber()
-        );
+        dc.setPenWidth(t);
+        dc.drawArc(x, y, r, Gfx.ARC_CLOCKWISE, 90, endAngle);
     }
 
     function drawSphere(dc, cx, cy, radius, coreColor, rimColor, highlightColor) {
+        var x = cx.toNumber();
+        var y = cy.toNumber();
         var r = radius.toNumber();
 
-        dc.setColor(coreColor, coreColor);
-        dc.fillCircle(cx.toNumber(), cy.toNumber(), r);
+        // Layer 1: Shadow ring (darker, slightly larger) for depth
+        dc.setColor(0x2A0909, Gfx.COLOR_TRANSPARENT);
+        dc.setPenWidth(6);
+        dc.drawCircle(x, y, r + 4);
 
+        // Layer 2: Core sphere (filled)
+        dc.setColor(coreColor, coreColor);
+        dc.fillCircle(x, y, r);
+
+        // Layer 3: Rim gradient (simulate with concentric circles)
         dc.setColor(rimColor, Gfx.COLOR_TRANSPARENT);
-        dc.setPenWidth((radius * 0.2).toNumber());
-        dc.drawCircle(cx.toNumber(), cy.toNumber(), r);
+        dc.setPenWidth(2);
+        dc.drawCircle(x, y, r);
+        dc.setPenWidth(1);
+        dc.drawCircle(x, y, r - 1);
+
+        // Layer 4: Highlight (top-left quadrant) for 3D effect
+        var highlightRadius = (radius * 0.4).toNumber();
+        var highlightX = (cx - radius * 0.3).toNumber();
+        var highlightY = (cy - radius * 0.3).toNumber();
 
         dc.setColor(highlightColor, Gfx.COLOR_TRANSPARENT);
-        dc.setPenWidth((radius * 0.12).toNumber());
-        dc.drawArc(
-            (cx - radius * 0.3).toNumber(),
-            (cy - radius * 0.3).toNumber(),
-            (radius * 0.6).toNumber(),
-            Gfx.ARC_CLOCKWISE,
-            180,
-            360
-        );
+        dc.fillCircle(highlightX, highlightY, highlightRadius);
     }
 
     function drawGuide(dc, cx, cy, baseRadius, ratio, color) {

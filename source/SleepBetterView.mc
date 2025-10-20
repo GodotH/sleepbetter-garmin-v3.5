@@ -413,6 +413,33 @@ class SleepBetterView extends WatchUi.View {
             Effects.drawGuide(dc, _centerX, _centerY, _currentRadius, guideRatio, COLOR_GUIDE);
         }
 
+        // Phase-specific glow effects (drawn before sphere for layering)
+        if (_state == AppState.STATE_RUNNING || _state == AppState.STATE_PAUSED) {
+            var glowColor = 0x3A0C0C;  // Default dim glow
+            var glowSize = 1.05;
+
+            if (_sessionState != null) {
+                var phase = _sessionState["phase"];
+
+                if (phase == BreathingPhase.PHASE_INHALE) {
+                    glowColor = 0xE43A3A;  // Bright crimson glow
+                    glowSize = 1.2;
+                } else if (phase == BreathingPhase.PHASE_HOLD) {
+                    glowColor = 0xFF7878;  // Pulsing bright glow
+                    glowSize = 1.15;
+                } else if (phase == BreathingPhase.PHASE_EXHALE) {
+                    glowColor = 0x7E1717;  // Dimmer glow
+                    glowSize = 1.05;
+                }
+
+                // Draw glow as semi-transparent outer ring
+                dc.setColor(glowColor, Gfx.COLOR_TRANSPARENT);
+                dc.setPenWidth(8);
+                var glowRadius = (_currentRadius * glowSize).toNumber();
+                dc.drawCircle(_centerX.toNumber(), _centerY.toNumber(), glowRadius);
+            }
+        }
+
         Effects.drawSphere(dc, _centerX, _centerY, _currentRadius, COLOR_SPHERE_CORE, COLOR_SPHERE_RIM, COLOR_SPHERE_HIGHLIGHT);
 
         // UI Text (order matters for z-index)
