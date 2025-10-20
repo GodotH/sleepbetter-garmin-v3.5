@@ -141,9 +141,7 @@ class SleepBetterView extends WatchUi.View {
         _blockLabel = findDrawableById("BlockLabel");
         _hintLabel = findDrawableById("HintLabel");
 
-        if (_hintLabel != null) {
-            _hintLabel.setText(Rez.Strings.TapInstruction);
-        }
+        _setLabel(_hintLabel, Rez.Strings.TapInstruction);
 
         _updateLabels();
     }
@@ -477,11 +475,6 @@ class SleepBetterView extends WatchUi.View {
         if (textLabel != null) {
             textLabel.setText(value);
         }
-    }
-        }
-    }
-
-    }
     }
 
     private function _phaseString(phase) {
