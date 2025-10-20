@@ -108,16 +108,10 @@ class SleepBetterView extends WatchUi.View {
         _totalText = "0:00";
         _blockText = "";
 
-        _phaseLabel = null;
-        _countdownLabel = null;
-        _totalLabel = null;
-        _blockLabel = null;
-        _hintLabel = null;
+        // XML labels removed - now using canvas rendering
     }
 
     function onLayout(dc) {
-        setLayout(Rez.Layouts.MainLayout(dc));
-
         _width = dc.getWidth();
         _height = dc.getHeight();
         _centerX = _width / 2.0;
@@ -133,15 +127,7 @@ class SleepBetterView extends WatchUi.View {
         if (_sphereMin < 40.0) { _sphereMin = 40.0; }
         _currentRadius = _sphereMin;
 
-        _phaseLabel = findDrawableById("PhaseLabel");
-        _countdownLabel = findDrawableById("CountdownLabel");
-        _totalLabel = findDrawableById("TotalLabel");
-        _blockLabel = findDrawableById("BlockLabel");
-        _hintLabel = findDrawableById("HintLabel");
-
-        _setLabel(_hintLabel, Rez.Strings.TapInstruction);
-
-        _updateLabels();
+        WatchUi.requestUpdate();
     }
 
     function onShow() {
@@ -156,7 +142,6 @@ class SleepBetterView extends WatchUi.View {
 
     function onUpdate(dc) {
         try {
-            _updateLabels();
             _render(dc);
         } catch (ex) {
             ErrorHandler.logError("SleepBetterView.onUpdate", ex);
@@ -431,7 +416,6 @@ class SleepBetterView extends WatchUi.View {
         }
 
         _drawPill(dc, _pillText);
-        View.onUpdate(dc);
     }
 
     private function _drawPill(dc, text) {
@@ -460,20 +444,7 @@ class SleepBetterView extends WatchUi.View {
         );
     }
 
-    private function _updateLabels() {
-        _setLabel(_phaseLabel, _phaseText);
-        _setLabel(_countdownLabel, _countdownText);
-        _setLabel(_totalLabel, _totalText);
-        _setLabel(_blockLabel, _blockText);
-    }
-
-    private function _setLabel(label, value) {
-        if (label == null) { return; }
-        var textLabel = label as WatchUi.Text;
-        if (textLabel != null) {
-            textLabel.setText(value);
-        }
-    }
+    // _updateLabels() and _setLabel() removed - using canvas rendering
 
     private function _phaseString(phase) {
         if (phase == BreathingPhase.PHASE_INHALE) {
