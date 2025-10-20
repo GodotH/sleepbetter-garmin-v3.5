@@ -27,20 +27,21 @@ class SleepBetterView extends WatchUi.View {
     const IDLE_PULSE_PERIOD = 6.0;
     const MAX_DELTA = 0.5;
 
-    const COLOR_BACKGROUND = 0x120404;
-    const COLOR_BACKGROUND_ACCENT = 0x2A0909;
-    const COLOR_TEXT_PRIMARY = 0xFFE5E5;
-    const COLOR_TEXT_MUTED = 0xC7A9A9;
-    const COLOR_RING_TRACK = 0x2D0A0A;
-    const COLOR_RING_FILL = 0xE43A3A;
-    const COLOR_GUIDE = 0xFF6B6B;
-    const COLOR_SPHERE_CORE = 0x9E1D1D;
-    const COLOR_SPHERE_RIM = 0xE45454;
-    const COLOR_SPHERE_HIGHLIGHT = 0xFF9999;
-    const COLOR_PILL_BACKGROUND = 0x7A1515;
-    const COLOR_PILL_BORDER = 0xE43A3A;
-    const COLOR_OVERLAY_FILL = 0x401010;
-    const COLOR_WATERMARK = 0xFF6B6B;
+    // Colors matching HTML prototype exactly
+    const COLOR_BACKGROUND = 0x120404;          // --crimson-950
+    const COLOR_BACKGROUND_ACCENT = 0x3A0C0C;  // --crimson-900 (updated)
+    const COLOR_TEXT_PRIMARY = 0xF7EDED;       // --ink (updated from 0xFFE5E5)
+    const COLOR_TEXT_MUTED = 0xCBB3B3;         // --muted (updated from 0xC7A9A9)
+    const COLOR_RING_TRACK = 0x2D0A0A;         // rgba(198,38,38,.22) approximation
+    const COLOR_RING_FILL = 0xFF0000;          // Pure red (updated from 0xE43A3A)
+    const COLOR_GUIDE = 0xFF6B6B;              // --watermark
+    const COLOR_SPHERE_CORE = 0x7E1717;        // --crimson-800 (updated from 0x9E1D1D)
+    const COLOR_SPHERE_RIM = 0xE43A3A;         // --crimson-500 (updated from 0xE45454)
+    const COLOR_SPHERE_HIGHLIGHT = 0xFF7373;   // rgba(255,115,115) (updated)
+    const COLOR_PILL_BACKGROUND = 0x7A1515;    // rgba(198,38,38,.14) approx
+    const COLOR_PILL_BORDER = 0xC62626;        // --crimson-600 (updated)
+    const COLOR_OVERLAY_FILL = 0x140707;       // rgba(20,7,7,.85) approx (updated)
+    const COLOR_WATERMARK = 0xFF6B6B;          // Phase watermark color
 
     // Font constants for canvas text rendering
     const FONT_SIZE_TITLE = Gfx.FONT_SMALL;
@@ -126,14 +127,13 @@ class SleepBetterView extends WatchUi.View {
         _centerX = _width / 2.0;
         _centerY = _height / 2.0;
 
+        // Match HTML prototype sizing
         var minDim = (_width < _height) ? _width : _height;
-        _progressRadius = minDim * 0.42;
-        _progressThickness = minDim * 0.08;
-        if (_progressThickness < 10.0) { _progressThickness = 10.0; }
-        _sphereMax = _progressRadius - (_progressThickness * 1.1);
-        if (_sphereMax < 80.0) { _sphereMax = 80.0; }
-        _sphereMin = _sphereMax * 0.55;
-        if (_sphereMin < 40.0) { _sphereMin = 40.0; }
+        _progressRadius = minDim * 0.31;       // ~140px on 454x454 (was 0.42)
+        _progressThickness = minDim * 0.026;   // ~12px (was 0.08)
+
+        _sphereMax = minDim * 0.248;           // ~112px (matches --sphere-size)
+        _sphereMin = _sphereMax * 0.33;        // ~37px (matches --size0, was 0.55)
         _currentRadius = _sphereMin;
 
         WatchUi.requestUpdate();
