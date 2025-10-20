@@ -302,7 +302,7 @@ class SleepBetterView extends WatchUi.View {
         _progressValue = state["sessionProgress"];
 
         var phaseProgress = state["phaseProgress"];
-        var eased = EasingFunctions.smoothstep(phaseProgress);
+        var eased = EasingFunctions.easeInOutQuad(phaseProgress);  // Matches HTML prototype
 
         if (phase == BreathingPhase.PHASE_INHALE) {
             _currentRadius = _sphereMin + ((_sphereMax - _sphereMin) * eased);

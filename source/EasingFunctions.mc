@@ -36,4 +36,18 @@ module EasingFunctions {
         if (t >= 1.0) { return 1.0; }
         return t * t * t;
     }
+
+    // Ease-in-out quadratic - matches HTML prototype breathing easing
+    // Same as JavaScript: t < 0.5 ? 2*t*t : 1 - pow(-2*t + 2, 2) / 2
+    function easeInOutQuad(t) {
+        if (t <= 0.0) { return 0.0; }
+        if (t >= 1.0) { return 1.0; }
+
+        if (t < 0.5) {
+            return 2.0 * t * t;
+        } else {
+            var temp = -2.0 * t + 2.0;
+            return 1.0 - (temp * temp / 2.0);
+        }
+    }
 }
