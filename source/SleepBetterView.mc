@@ -186,7 +186,7 @@ class SleepBetterView extends WatchUi.View {
     private function _startTimer() {
         if (_timer == null) {
             _timer = new Timer.Timer();
-            _timer.start(method(:_onTimer), TIMER_INTERVAL_MS, true);
+            _timer.start(method(:onTimer), TIMER_INTERVAL_MS, true);
         }
     }
 
@@ -197,7 +197,7 @@ class SleepBetterView extends WatchUi.View {
         }
     }
 
-    private function _onTimer() as Void {
+    function onTimer() as Void {
         var now = System.getTimer();
         var deltaMs = now - _lastTickMs;
         if (deltaMs < 0) { deltaMs = 0; }
