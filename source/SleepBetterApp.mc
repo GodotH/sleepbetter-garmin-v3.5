@@ -23,8 +23,25 @@ class SleepBetterApp extends Application.AppBase {
         // Cleanup will be handled in view
     }
 
-    // Return initial view
+    // Return initial view and input delegate
     function getInitialView() {
-        return [new SleepBetterView()];
+        var view = new SleepBetterView();
+        var delegate = new SleepBetterInputDelegate(view);
+        return [view, delegate];
+    }
+}
+
+// Input delegate to handle tap events
+class SleepBetterInputDelegate extends WatchUi.BehaviorDelegate {
+    private var _view;
+
+    function initialize(view) {
+        BehaviorDelegate.initialize();
+        _view = view;
+    }
+
+    // Handle screen taps
+    function onTap(clickEvent) {
+        return _view.onTap(clickEvent.getType());
     }
 }

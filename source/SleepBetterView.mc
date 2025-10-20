@@ -113,8 +113,6 @@ class SleepBetterView extends WatchUi.View {
         _totalLabel = null;
         _blockLabel = null;
         _hintLabel = null;
-
-        SettingsManager.isHapticsEnabled(); // ensure storage initialized
     }
 
     function onLayout(dc) {
@@ -164,7 +162,7 @@ class SleepBetterView extends WatchUi.View {
             ErrorHandler.logError("SleepBetterView.onUpdate", ex);
             _resetToIdle();
         }
-        WatchUi.requestUpdate();
+        // Timer already calls requestUpdate() - no need for duplicate call here
     }
 
     function onTap(type) {
