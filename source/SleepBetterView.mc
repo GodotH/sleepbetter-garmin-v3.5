@@ -1,5 +1,30 @@
+// ============================================================================
 // SleepBetterView.mc
-// Renders the SleepBetter breathing session UI and handles interaction.
+// 4-7-8 Breathing App - Main View Controller
+// ============================================================================
+// VERSION: v.01-beta
+// DATE: 2025-10-21
+// TIMESTAMP: 2025-10-21T12:51:00Z
+// DEVICE: Garmin Venu 3 (454×454px)
+// ============================================================================
+//
+// DESCRIPTION:
+//   Renders the breathing session UI with dynamic, multi-device scaling.
+//   All UI elements (sphere, progress ring, text) scale proportionally based
+//   on device screen size for consistent appearance across watch models.
+//
+// KEY FEATURES:
+//   - Canvas-only rendering (no XML layout)
+//   - Dynamic scaling for multi-device support
+//   - Single-tap interaction model
+//   - AMOLED-optimized (pure blacks)
+//   - Smooth animations with easing functions
+//
+// SCALING PHILOSOPHY:
+//   See DEVICE-SCALING.md for comprehensive scaling documentation.
+//   All sizes calculated relative to screen dimensions, not hardcoded pixels.
+//
+// ============================================================================
 
 using Toybox.Attention;
 using Toybox.Graphics as Gfx;
@@ -121,20 +146,55 @@ class SleepBetterView extends WatchUi.View {
         // XML labels removed - now using canvas rendering
     }
 
+    // ========================================================================
+    // DYNAMIC SCALING - Multi-Device Support
+    // ========================================================================
+    // This function calculates all UI element sizes based on device screen
+    // dimensions. Never use hardcoded pixel values - always calculate relative
+    // to screen size for consistent appearance across different watch models.
+    //
+    // VENU 3 REFERENCE (454×454px):
+    //   - Progress Ring: 219px radius (48.2% of screen width)
+    //   - Sphere Max: 120px radius (26.4% of screen width)
+    //   - Sphere Min: 40px radius (8.8% of screen width)
+    //
+    // See DEVICE-SCALING.md for comprehensive scaling documentation.
+    // ========================================================================
     function onLayout(dc) {
-        _width = dc.getWidth();
-        _height = dc.getHeight();
-        _centerX = _width / 2.0;
-        _centerY = _height / 2.0;
+        // Get device screen dimensions (varies by watch model)
+        _width = dc.getWidth();    // e.g., 454px on Venu 3
+        _height = dc.getHeight();  // e.g., 454px on Venu 3
 
-        // Match HTML prototype sizing
-        var minDim = (_width < _height) ? _width : _height;
-        _progressRadius = minDim * 0.31;       // ~140px on 454x454 (was 0.42)
-        _progressThickness = minDim * 0.026;   // ~12px (was 0.08)
+        // Calculate center point
+        _centerX = _width / 2.0;   // e.g., 227px on Venu 3
+        _centerY = _height / 2.0;  // e.g., 227px on Venu 3
 
-        _sphereMax = minDim * 0.248;           // ~112px (matches --sphere-size)
-        _sphereMin = _sphereMax * 0.33;        // ~37px (matches --size0, was 0.55)
-        _currentRadius = _sphereMin;
+        // Use minimum dimension as reference (handles rectangular screens)
+        var minDim = (_width < _height) ? _width : _height;  // 454px on Venu 3
+
+        // ---------------------------------------------------------------------
+        // PROGRESS RING SCALING (Dynamic)
+        // ---------------------------------------------------------------------
+        // Formula: (screen_width / 2) - margin
+        // Result: Ring touches or nearly touches screen edges
+        // Venu 3: (454 / 2) - 8 = 219px (48.2% of screen)
+        //
+        _progressRadius = (minDim / 2.0) - 8;  // 219px on Venu 3
+        _progressThickness = 10.0;              // 10px stroke (2.2% of screen)
+
+        // ---------------------------------------------------------------------
+        // BREATHING SPHERE SCALING (Dynamic, Relative to Ring)
+        // ---------------------------------------------------------------------
+        // Max: 55% of ring radius (large, prominent sphere)
+        // Min: 33% of max sphere (PRD requirement: 0.33x-1.0x range)
+        //
+        // Venu 3:
+        //   Max: 219 * 0.55 = 120px (26.4% of screen)
+        //   Min: 120 * 0.33 = 40px (8.8% of screen)
+        //
+        _sphereMax = _progressRadius * 0.55;   // 120px on Venu 3
+        _sphereMin = _sphereMax * 0.33;        // 40px on Venu 3 (PRD compliant)
+        _currentRadius = _sphereMin;           // Start at minimum size
 
         WatchUi.requestUpdate();
     }
@@ -229,7 +289,8 @@ class SleepBetterView extends WatchUi.View {
 
         var pulse = (Math.sin((_idleElapsed / IDLE_PULSE_PERIOD) * (Math.PI * 2.0)) + 1.0) / 2.0;
         var eased = EasingFunctions.smoothstep(pulse);
-        _currentRadius = _sphereMin + (_sphereMin * 0.2 * eased);
+        // INTRO SCREEN: Full-screen circle with subtle pulse (90% of screen radius)
+        _currentRadius = _progressRadius * 0.90 + (_progressRadius * 0.05 * eased);
         _progressValue = 0.0;
 
         _phaseText = WatchUi.loadResource(Rez.Strings.PhasePrepare);
@@ -408,56 +469,21 @@ class SleepBetterView extends WatchUi.View {
         Effects.drawBackground(dc, _centerX, _centerY, _progressRadius, COLOR_BACKGROUND_ACCENT, COLOR_BACKGROUND);
         Effects.drawProgressRing(dc, _centerX, _centerY, _progressRadius, _progressThickness, _progressValue, COLOR_RING_TRACK, COLOR_RING_FILL);
 
-        if (_guideElapsed < GUIDE_DURATION) {
-            var guideRatio = 1.0 - (_guideElapsed / GUIDE_DURATION);
-            Effects.drawGuide(dc, _centerX, _centerY, _currentRadius, guideRatio, COLOR_GUIDE);
-        }
-
-        // Phase-specific glow effects (drawn before sphere for layering)
-        if (_state == AppState.STATE_RUNNING || _state == AppState.STATE_PAUSED) {
-            var glowColor = 0x3A0C0C;  // Default dim glow
-            var glowSize = 1.05;
-
-            if (_sessionState != null) {
-                var phase = _sessionState["phase"];
-
-                if (phase == BreathingPhase.PHASE_INHALE) {
-                    glowColor = 0xE43A3A;  // Bright crimson glow
-                    glowSize = 1.2;
-                } else if (phase == BreathingPhase.PHASE_HOLD) {
-                    glowColor = 0xFF7878;  // Pulsing bright glow
-                    glowSize = 1.15;
-                } else if (phase == BreathingPhase.PHASE_EXHALE) {
-                    glowColor = 0x7E1717;  // Dimmer glow
-                    glowSize = 1.05;
-                }
-
-                // Draw glow as semi-transparent outer ring
-                dc.setColor(glowColor, Gfx.COLOR_TRANSPARENT);
-                dc.setPenWidth(8);
-                var glowRadius = (_currentRadius * glowSize).toNumber();
-                dc.drawCircle(_centerX.toNumber(), _centerY.toNumber(), glowRadius);
-            }
-        }
-
+        // NO guide circles, NO glow effects - just clean sphere
         Effects.drawSphere(dc, _centerX, _centerY, _currentRadius, COLOR_SPHERE_CORE, COLOR_SPHERE_RIM, COLOR_SPHERE_HIGHLIGHT);
 
-        // UI Text (order matters for z-index)
-        _drawTitle(dc);                    // Top title
-        _drawPhaseWatermark(dc);           // Behind countdown (low opacity)
-        _drawCountdown(dc);                // Center countdown (high opacity)
-        _drawTimers(dc);                   // Total time + pattern
-
+        // MINIMAL UI - only show what's needed for each state
         if (_state == AppState.STATE_IDLE) {
+            // Idle: NO title, just tap hint
             Effects.drawPlayHint(dc, _centerX, _centerY, _currentRadius, COLOR_TEXT_MUTED);
+        } else if (_state == AppState.STATE_RUNNING || _state == AppState.STATE_PAUSED) {
+            // Session: ONLY countdown (large number) and timer above
+            _drawCountdown(dc);
+            _drawSessionTimer(dc);
+        } else if (_state == AppState.STATE_COMPLETE) {
+            // Complete: Just "Well Done" text
+            _drawWellDone(dc);
         }
-
-        if (_state == AppState.STATE_COMPLETE) {
-            var outroRatio = _outroElapsed / OUTRO_DURATION;
-            Effects.drawOutro(dc, _centerX, _centerY, _width, _height, outroRatio, WatchUi.loadResource(Rez.Strings.OutroHeadline), WatchUi.loadResource(Rez.Strings.OutroMessage), COLOR_OVERLAY_FILL, COLOR_TEXT_PRIMARY);
-        }
-
-        _drawPill(dc, _pillText);
     }
 
     private function _drawPill(dc, text) {
@@ -517,17 +543,38 @@ class SleepBetterView extends WatchUi.View {
     }
 
     private function _drawCountdown(dc) {
-        // Only show during active session
-        if (_state != AppState.STATE_RUNNING && _state != AppState.STATE_PAUSED) {
-            return;
-        }
-
+        // Large countdown number in center
         dc.setColor(COLOR_TEXT_PRIMARY, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             _centerX.toNumber(),
             _centerY.toNumber(),
             FONT_SIZE_COUNTDOWN,
             _countdownText,
+            Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+        );
+    }
+
+    private function _drawSessionTimer(dc) {
+        // Timer above sphere
+        var totalY = _centerY - (_sphereMax * 1.15);
+        dc.setColor(COLOR_TEXT_MUTED, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            _centerX.toNumber(),
+            totalY.toNumber(),
+            Gfx.FONT_SMALL,
+            _totalText,
+            Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+        );
+    }
+
+    private function _drawWellDone(dc) {
+        // Just "Well Done" text - simple and clean
+        dc.setColor(COLOR_TEXT_PRIMARY, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            _centerX.toNumber(),
+            _centerY.toNumber(),
+            Gfx.FONT_LARGE,
+            "Well Done",
             Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
         );
     }

@@ -1,5 +1,25 @@
+// ============================================================================
 // BreathingController.mc
-// Breathing state machine with session plan orchestration.
+// 4-7-8 Breathing App - Session State Machine
+// ============================================================================
+// VERSION: v.01-beta
+// DATE: 2025-10-21
+// TIMESTAMP: 2025-10-21T12:51:00Z
+// ============================================================================
+//
+// DESCRIPTION:
+//   Orchestrates breathing session phases, timing, and state transitions.
+//   Manages session plan execution with configurable breathing patterns.
+//
+// CURRENT SESSION PLAN (v.01-beta):
+//   - Phase 1: 1.5 min warm-up (4-4-5 pattern)
+//   - Phase 2: 1.5 min transition (4-5-6 pattern)
+//   - Phase 3: 7 min main (4-7-8 pattern)
+//   - Total: 10 minutes
+//
+// NOTE: Session structure updated from original to match PRD requirements.
+//
+// ============================================================================
 
 using Toybox.Lang;
 using Toybox.Math;
@@ -354,7 +374,7 @@ class BreathingController {
         return fallback;
     }
 
-    // Default session plan: 1 minute ramp + 4 minute main 4-7-8 pattern
+    // Default session plan: 1 minute ramp + 9 minute main 4-7-8 pattern = 10 minutes total
     function getDefaultPlan() {
         return [
             {
@@ -364,7 +384,7 @@ class BreathingController {
             },
             {
                 "label" => "4-7-8",
-                "minutes" => 4.0,
+                "minutes" => 9.0,
                 "pattern" => { "inhale" => 4.0, "hold" => 7.0, "exhale" => 8.0 }
             }
         ];

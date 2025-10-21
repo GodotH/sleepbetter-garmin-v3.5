@@ -51,33 +51,15 @@ module Effects {
     }
 
     function drawSphere(dc, cx, cy, radius, coreColor, rimColor, highlightColor) {
+        // SIMPLE: Just ONE solid filled circle in red
+        // No extra rings, no noise, no artifacts
         var x = cx.toNumber();
         var y = cy.toNumber();
         var r = radius.toNumber();
 
-        // Layer 1: Shadow ring (darker, slightly larger) for depth
-        dc.setColor(0x2A0909, Gfx.COLOR_TRANSPARENT);
-        dc.setPenWidth(6);
-        dc.drawCircle(x, y, r + 4);
-
-        // Layer 2: Core sphere (filled)
-        dc.setColor(coreColor, coreColor);
+        // Single filled circle - solid red like HTML prototype
+        dc.setColor(0xFF0000, 0xFF0000);  // Pure red fill
         dc.fillCircle(x, y, r);
-
-        // Layer 3: Rim gradient (simulate with concentric circles)
-        dc.setColor(rimColor, Gfx.COLOR_TRANSPARENT);
-        dc.setPenWidth(2);
-        dc.drawCircle(x, y, r);
-        dc.setPenWidth(1);
-        dc.drawCircle(x, y, r - 1);
-
-        // Layer 4: Highlight (top-left quadrant) for 3D effect
-        var highlightRadius = (radius * 0.4).toNumber();
-        var highlightX = (cx - radius * 0.3).toNumber();
-        var highlightY = (cy - radius * 0.3).toNumber();
-
-        dc.setColor(highlightColor, Gfx.COLOR_TRANSPARENT);
-        dc.fillCircle(highlightX, highlightY, highlightRadius);
     }
 
     function drawGuide(dc, cx, cy, baseRadius, ratio, color) {
