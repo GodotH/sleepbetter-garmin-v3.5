@@ -3,8 +3,8 @@
 // 4-7-8 Breathing App - Session State Machine
 // ============================================================================
 // VERSION: v.01-beta
-// DATE: 2025-10-21
-// TIMESTAMP: 2025-10-21T12:51:00Z
+// TIMESTAMP: 25-1021-12:51
+// DEVICE: Garmin Venu 3 (454×454px)
 // ============================================================================
 //
 // DESCRIPTION:
@@ -12,12 +12,15 @@
 //   Manages session plan execution with configurable breathing patterns.
 //
 // CURRENT SESSION PLAN (v.01-beta):
-//   - Phase 1: 1.5 min warm-up (4-4-5 pattern)
-//   - Phase 2: 1.5 min transition (4-5-6 pattern)
-//   - Phase 3: 7 min main (4-7-8 pattern)
+//   - Warmup: 1.0 min (4-4-5 pattern)
+//   - Main: 9.0 min (4-7-8 pattern)
 //   - Total: 10 minutes
 //
-// NOTE: Session structure updated from original to match PRD requirements.
+// PRD TARGET (v1.0.0 - Future):
+//   - Warm-up: 1.5 min (4-4-5 pattern)
+//   - Transition: 1.5 min (4-5-6 pattern)
+//   - Main: 7.0 min (4-7-8 pattern)
+//   - Total: 10 minutes
 //
 // ============================================================================
 
