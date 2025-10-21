@@ -8,16 +8,13 @@ using Toybox.Math;
 module Effects {
 
     function drawBackground(dc, cx, cy, radius, accentColor, backgroundColor) {
+        // HTML prototype uses solid deep black-crimson background
+        // Very subtle radial gradients (10% opacity) - too subtle for MonkeyC to simulate well
+        // Using solid background for clean, dark look
         dc.setColor(Gfx.COLOR_TRANSPARENT, backgroundColor);
         dc.clear();
 
-        // Soft vignette with concentric circles for depth
-        dc.setColor(accentColor, Gfx.COLOR_TRANSPARENT);
-        dc.setPenWidth(radius.toNumber());
-        dc.drawCircle(cx.toNumber(), cy.toNumber(), (radius * 1.2).toNumber());
-
-        dc.setPenWidth((radius * 0.6).toNumber());
-        dc.drawCircle(cx.toNumber(), cy.toNumber(), (radius * 0.8).toNumber());
+        // No accent circles - keep it simple and dark like HTML prototype
     }
 
     function drawProgressRing(dc, cx, cy, radius, thickness, progress, trackColor, fillColor) {

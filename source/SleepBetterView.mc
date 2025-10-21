@@ -28,19 +28,19 @@ class SleepBetterView extends WatchUi.View {
     const MAX_DELTA = 0.5;
 
     // Colors matching HTML prototype exactly
-    const COLOR_BACKGROUND = 0x120404;          // --crimson-950
-    const COLOR_BACKGROUND_ACCENT = 0x3A0C0C;  // --crimson-900 (updated)
-    const COLOR_TEXT_PRIMARY = 0xF7EDED;       // --ink (updated from 0xFFE5E5)
-    const COLOR_TEXT_MUTED = 0xCBB3B3;         // --muted (updated from 0xC7A9A9)
-    const COLOR_RING_TRACK = 0x2D0A0A;         // rgba(198,38,38,.22) approximation
-    const COLOR_RING_FILL = 0xFF0000;          // Pure red (updated from 0xE43A3A)
+    const COLOR_BACKGROUND = 0x120404;          // --crimson-950 (deep black-crimson)
+    const COLOR_BACKGROUND_ACCENT = 0x3A0C0C;  // --crimson-900 (dark crimson)
+    const COLOR_TEXT_PRIMARY = 0xF7EDED;       // --ink (off-white)
+    const COLOR_TEXT_MUTED = 0xCBB3B3;         // --muted (light crimson-gray)
+    const COLOR_RING_TRACK = 0x1A0505;         // Much darker - barely visible (was 0x2D0A0A)
+    const COLOR_RING_FILL = 0xFF0000;          // Pure red #FF0000
     const COLOR_GUIDE = 0xFF6B6B;              // --watermark
-    const COLOR_SPHERE_CORE = 0x7E1717;        // --crimson-800 (updated from 0x9E1D1D)
-    const COLOR_SPHERE_RIM = 0xE43A3A;         // --crimson-500 (updated from 0xE45454)
-    const COLOR_SPHERE_HIGHLIGHT = 0xFF7373;   // rgba(255,115,115) (updated)
+    const COLOR_SPHERE_CORE = 0x1F0606;        // Even darker - almost black with crimson tint (was 0x2A0808)
+    const COLOR_SPHERE_RIM = 0xE43A3A;         // --crimson-500 (bright crimson rim)
+    const COLOR_SPHERE_HIGHLIGHT = 0xFF7373;   // rgba(255,115,115) highlight
     const COLOR_PILL_BACKGROUND = 0x7A1515;    // rgba(198,38,38,.14) approx
-    const COLOR_PILL_BORDER = 0xC62626;        // --crimson-600 (updated)
-    const COLOR_OVERLAY_FILL = 0x140707;       // rgba(20,7,7,.85) approx (updated)
+    const COLOR_PILL_BORDER = 0xC62626;        // --crimson-600
+    const COLOR_OVERLAY_FILL = 0x140707;       // rgba(20,7,7,.85) approx
     const COLOR_WATERMARK = 0xFF6B6B;          // Phase watermark color
 
     // Font constants for canvas text rendering
@@ -112,8 +112,8 @@ class SleepBetterView extends WatchUi.View {
         _guideElapsed = GUIDE_DURATION;
         _idleElapsed = 0.0;
 
-        _pillText = Rez.Strings.TapInstruction;
-        _phaseText = Rez.Strings.PhasePrepare;
+        _pillText = WatchUi.loadResource(Rez.Strings.TapInstruction);
+        _phaseText = WatchUi.loadResource(Rez.Strings.PhasePrepare);
         _countdownText = "0";
         _totalText = "0:00";
         _blockText = "";
@@ -232,11 +232,11 @@ class SleepBetterView extends WatchUi.View {
         _currentRadius = _sphereMin + (_sphereMin * 0.2 * eased);
         _progressValue = 0.0;
 
-        _phaseText = Rez.Strings.PhasePrepare;
+        _phaseText = WatchUi.loadResource(Rez.Strings.PhasePrepare);
         _countdownText = "0";
         _totalText = "0:00";
         _blockText = "";
-        _pillText = Rez.Strings.TapInstruction;
+        _pillText = WatchUi.loadResource(Rez.Strings.TapInstruction);
     }
 
     private function _updateIntro(dt) {
@@ -252,8 +252,8 @@ class SleepBetterView extends WatchUi.View {
         var eased = EasingFunctions.easeInCubic(ratio);
 
         _currentRadius = _sphereMin + ((_sphereMax * 0.4) * eased);
-        _pillText = Rez.Strings.PillReady;
-        _phaseText = Rez.Strings.PhasePrepare;
+        _pillText = WatchUi.loadResource(Rez.Strings.PillReady);
+        _phaseText = WatchUi.loadResource(Rez.Strings.PhasePrepare);
     }
 
     private function _updateRunning(dt) {
@@ -277,7 +277,7 @@ class SleepBetterView extends WatchUi.View {
         var eased = EasingFunctions.easeInOutCosine(pulse);
         var variation = (_sphereMax - _sphereMin) * 0.08 * eased;
         _currentRadius = _sphereMin + variation;
-        _pillText = Rez.Strings.PillPaused;
+        _pillText = WatchUi.loadResource(Rez.Strings.PillPaused);
     }
 
     private function _updateComplete(dt) {
@@ -288,7 +288,7 @@ class SleepBetterView extends WatchUi.View {
         var ratio = _outroElapsed / OUTRO_DURATION;
         var eased = EasingFunctions.easeOutCubic(1.0 - ratio);
         _currentRadius = _sphereMin + ((_sphereMax - _sphereMin) * 0.15 * eased);
-        _pillText = Rez.Strings.PillComplete;
+        _pillText = WatchUi.loadResource(Rez.Strings.PillComplete);
     }
 
     private function _applySessionState(state) {
@@ -306,17 +306,17 @@ class SleepBetterView extends WatchUi.View {
 
         if (phase == BreathingPhase.PHASE_INHALE) {
             _currentRadius = _sphereMin + ((_sphereMax - _sphereMin) * eased);
-            _pillText = Rez.Strings.PillInhale;
+            _pillText = WatchUi.loadResource(Rez.Strings.PillInhale);
         } else if (phase == BreathingPhase.PHASE_HOLD) {
             _currentRadius = _sphereMax;
-            _pillText = Rez.Strings.PillHold;
+            _pillText = WatchUi.loadResource(Rez.Strings.PillHold);
         } else if (phase == BreathingPhase.PHASE_EXHALE) {
             var inverse = 1.0 - eased;
             _currentRadius = _sphereMin + ((_sphereMax - _sphereMin) * inverse);
-            _pillText = Rez.Strings.PillExhale;
+            _pillText = WatchUi.loadResource(Rez.Strings.PillExhale);
         } else if (phase == BreathingPhase.PHASE_PREPARE) {
             _currentRadius = _sphereMin;
-            _pillText = Rez.Strings.PillReady;
+            _pillText = WatchUi.loadResource(Rez.Strings.PillReady);
         }
 
         _phaseText = _phaseString(phase);
@@ -344,8 +344,8 @@ class SleepBetterView extends WatchUi.View {
         _state = AppState.STATE_INTRO_PULSE;
         _introElapsed = 0.0;
         _guideElapsed = GUIDE_DURATION;
-        _pillText = Rez.Strings.PillReady;
-        _phaseText = Rez.Strings.PhasePrepare;
+        _pillText = WatchUi.loadResource(Rez.Strings.PillReady);
+        _phaseText = WatchUi.loadResource(Rez.Strings.PhasePrepare);
         _countdownText = "0";
         _totalText = "0:00";
     }
@@ -357,13 +357,13 @@ class SleepBetterView extends WatchUi.View {
         _lastPhase = BreathingPhase.PHASE_INHALE;
         _sessionState = null;
         _guideElapsed = 0.0;
-        _pillText = Rez.Strings.PillInhale;
+        _pillText = WatchUi.loadResource(Rez.Strings.PillInhale);
     }
 
     private function _enterPause() {
         _controller.pause();
         _state = AppState.STATE_PAUSED;
-        _pillText = Rez.Strings.PillPaused;
+        _pillText = WatchUi.loadResource(Rez.Strings.PillPaused);
     }
 
     private function _resumeSession() {
@@ -377,7 +377,7 @@ class SleepBetterView extends WatchUi.View {
         _controller.stop();
         _state = AppState.STATE_COMPLETE;
         _outroElapsed = 0.0;
-        _pillText = Rez.Strings.PillComplete;
+        _pillText = WatchUi.loadResource(Rez.Strings.PillComplete);
         _countdownText = "0";
     }
 
@@ -391,8 +391,8 @@ class SleepBetterView extends WatchUi.View {
         _guideElapsed = GUIDE_DURATION;
         _idleElapsed = 0.0;
         _lastPhase = BreathingPhase.PHASE_PREPARE;
-        _pillText = Rez.Strings.TapInstruction;
-        _phaseText = Rez.Strings.PhasePrepare;
+        _pillText = WatchUi.loadResource(Rez.Strings.TapInstruction);
+        _phaseText = WatchUi.loadResource(Rez.Strings.PhasePrepare);
         _countdownText = "0";
         _totalText = "0:00";
         _blockText = "";
@@ -454,7 +454,7 @@ class SleepBetterView extends WatchUi.View {
 
         if (_state == AppState.STATE_COMPLETE) {
             var outroRatio = _outroElapsed / OUTRO_DURATION;
-            Effects.drawOutro(dc, _centerX, _centerY, _width, _height, outroRatio, Rez.Strings.OutroHeadline, Rez.Strings.OutroMessage, COLOR_OVERLAY_FILL, COLOR_TEXT_PRIMARY);
+            Effects.drawOutro(dc, _centerX, _centerY, _width, _height, outroRatio, WatchUi.loadResource(Rez.Strings.OutroHeadline), WatchUi.loadResource(Rez.Strings.OutroMessage), COLOR_OVERLAY_FILL, COLOR_TEXT_PRIMARY);
         }
 
         _drawPill(dc, _pillText);
@@ -492,7 +492,7 @@ class SleepBetterView extends WatchUi.View {
         dc.drawText(
             _centerX.toNumber(),
             (_height * 0.04).toNumber(),
-            FONT_SIZE_TITLE,
+            Gfx.FONT_TINY,  // Use smaller font to fit full title
             "4-7-8 Red Breathing",
             Gfx.TEXT_JUSTIFY_CENTER
         );
@@ -559,15 +559,15 @@ class SleepBetterView extends WatchUi.View {
 
     private function _phaseString(phase) {
         if (phase == BreathingPhase.PHASE_INHALE) {
-            return Rez.Strings.PhaseInhale;
+            return WatchUi.loadResource(Rez.Strings.PhaseInhale);
         } else if (phase == BreathingPhase.PHASE_HOLD) {
-            return Rez.Strings.PhaseHold;
+            return WatchUi.loadResource(Rez.Strings.PhaseHold);
         } else if (phase == BreathingPhase.PHASE_EXHALE) {
-            return Rez.Strings.PhaseExhale;
+            return WatchUi.loadResource(Rez.Strings.PhaseExhale);
         } else if (phase == BreathingPhase.PHASE_COMPLETE) {
-            return Rez.Strings.PhaseComplete;
+            return WatchUi.loadResource(Rez.Strings.PhaseComplete);
         }
-        return Rez.Strings.PhasePrepare;
+        return WatchUi.loadResource(Rez.Strings.PhasePrepare);
     }
 
     private function _formatCountdown(seconds) {
