@@ -2,8 +2,8 @@
 // SleepBetterView.mc
 // 4-7-8 Breathing App - Main View Controller
 // ============================================================================
-// VERSION: v.01-beta
-// TIMESTAMP: 25-1021-12:51
+// VERSION: v.02c (HTML prototype timing corrections)
+// TIMESTAMP: 25-1022-21:20
 // DEVICE: Garmin Venu 3 (454×454px)
 // ============================================================================
 //
@@ -45,17 +45,17 @@ module AppState {
 
 class SleepBetterView extends WatchUi.View {
     const TIMER_INTERVAL_MS = 100;
-    const INTRO_DURATION = 2.0;
-    const OUTRO_DURATION = 3.5;
+    const INTRO_DURATION = 10.0;  // HTML prototype: ~9.7s (two 3s pulse cycles)
+    const OUTRO_DURATION = 7.0;   // HTML prototype: ~6.6s (concise completion)
     const GUIDE_DURATION = 0.8;
     const IDLE_PULSE_PERIOD = 6.0;
     const MAX_DELTA = 0.5;
 
-    // Colors matching HTML prototype exactly
-    const COLOR_BACKGROUND = 0x120404;          // --crimson-950 (deep black-crimson)
-    const COLOR_BACKGROUND_ACCENT = 0x3A0C0C;  // --crimson-900 (dark crimson)
-    const COLOR_TEXT_PRIMARY = 0xF7EDED;       // --ink (off-white)
-    const COLOR_TEXT_MUTED = 0xCBB3B3;         // --muted (light crimson-gray)
+    // Colors matching HTML prototype exactly (PRD-compliant)
+    const COLOR_BACKGROUND = 0x1B0708;          // PRD gradient start (#1B0708)
+    const COLOR_BACKGROUND_ACCENT = 0x8B0000;  // PRD primary red (#8B0000)
+    const COLOR_TEXT_PRIMARY = 0xF6ECEC;       // PRD light text (#F6ECEC)
+    const COLOR_TEXT_MUTED = 0xC9B5B5;         // PRD muted text (#C9B5B5)
     const COLOR_RING_TRACK = 0x1A0505;         // Much darker - barely visible (was 0x2D0A0A)
     const COLOR_RING_FILL = 0xFF0000;          // Pure red #FF0000
     const COLOR_GUIDE = 0xFF6B6B;              // --watermark
@@ -103,6 +103,8 @@ class SleepBetterView extends WatchUi.View {
     private var _countdownText;
     private var _totalText;
     private var _blockText;
+    private var _introMessage;  // Current intro message to display
+    private var _outroPhase;  // Track outro animation phase (0-4)
 
     private var _phaseLabel;
     private var _countdownLabel;
@@ -141,6 +143,8 @@ class SleepBetterView extends WatchUi.View {
         _countdownText = "0";
         _totalText = "0:00";
         _blockText = "";
+        _introMessage = "";
+        _outroPhase = 0;
 
         // XML labels removed - now using canvas rendering
     }
@@ -306,14 +310,42 @@ class SleepBetterView extends WatchUi.View {
             return;
         }
 
-        var ratio = _introElapsed / INTRO_DURATION;
-        if (ratio < 0.0) { ratio = 0.0; }
-        if (ratio > 1.0) { ratio = 1.0; }
-        var eased = EasingFunctions.easeInCubic(ratio);
+        // HTML Prototype Timeline (~9.7s):
+        // 0.0-0.8s: Play button fadeout
+        // 0.8-7.0s: "Get Ready" with gentle 6s pulse (two 3s cycles)
+        // 7.0-7.9s: Transition period (sphere settles)
+        // 7.9-9.7s: "Inhale" splash
 
-        _currentRadius = _sphereMin + ((_sphereMax * 0.4) * eased);
-        _pillText = WatchUi.loadResource(Rez.Strings.PillReady);
-        _phaseText = WatchUi.loadResource(Rez.Strings.PhasePrepare);
+        if (_introElapsed < 0.8) {
+            // Phase 1: Play button fadeout
+            _introMessage = "";
+            _currentRadius = _sphereMin;
+        } else if (_introElapsed < 7.0) {
+            // Phase 2: "Get Ready" with gentle 6s pulse (two 3s cycles)
+            _introMessage = WatchUi.loadResource(Rez.Strings.IntroGetReady);
+            var pulseTime = _introElapsed - 0.8;  // 0.8 to 7.0 = 6.2s
+            var cycleRatio = pulseTime / 6.2;  // Normalize to 0-1
+            var cycleProgress = (cycleRatio * 2.0);  // Scale to 0-2 for two cycles
+            // Create triangle wave: 0->1->0->1->0
+            var waveValue = cycleProgress % 1.0;
+            if ((cycleProgress.toNumber() % 2) == 1) {
+                waveValue = 1.0 - waveValue;  // Reverse second cycle
+            }
+            var eased = EasingFunctions.easeInOutQuad(waveValue);
+            _currentRadius = _sphereMin + ((_sphereMax * 0.55) * eased);  // Gentle pulse to 55% max
+        } else if (_introElapsed < 7.9) {
+            // Phase 3: Transition - sphere settles to min
+            _introMessage = "";
+            var settleRatio = (_introElapsed - 7.0) / 0.9;
+            _currentRadius = _sphereMin + ((_sphereMax * 0.55) * (1.0 - settleRatio));
+        } else {
+            // Phase 4: "Inhale" splash
+            _introMessage = WatchUi.loadResource(Rez.Strings.IntroInhale);
+            _currentRadius = _sphereMax * 0.4;
+        }
+
+        _pillText = "";  // No pill during intro
+        _phaseText = "";  // No phase watermark during intro
     }
 
     private function _updateRunning(dt) {
@@ -342,13 +374,31 @@ class SleepBetterView extends WatchUi.View {
 
     private function _updateComplete(dt) {
         _outroElapsed += dt;
-        if (_outroElapsed > OUTRO_DURATION) {
-            _outroElapsed = OUTRO_DURATION;
+
+        // HTML Prototype Timeline (~6.6s total):
+        // 0.0-1.2s: Sphere fade (phase 0)
+        // 1.2-2.2s: Outro heart screen appears (phase 1)
+        // 2.2-4.6s: "Well Done" text shows (phase 2)
+        // 4.6-6.0s: "Well Done" fades out (phase 3)
+        // 6.0-6.6s: Heart message reveals (phase 4)
+
+        if (_outroElapsed < 1.2) {
+            _outroPhase = 0;  // Sphere fade
+            var fadeRatio = _outroElapsed / 1.2;
+            _currentRadius = _sphereMax * (1.0 - fadeRatio);
+        } else if (_outroElapsed < 2.2) {
+            _outroPhase = 1;  // Outro heart screen appears
+            _currentRadius = 0.0;
+        } else if (_outroElapsed < 4.6) {
+            _outroPhase = 2;  // "Well Done" visible
+            _currentRadius = 0.0;
+        } else if (_outroElapsed < 6.0) {
+            _outroPhase = 3;  // "Well Done" fading out
+            _currentRadius = 0.0;
+        } else {
+            _outroPhase = 4;  // Heart message
+            _currentRadius = 0.0;
         }
-        var ratio = _outroElapsed / OUTRO_DURATION;
-        var eased = EasingFunctions.easeOutCubic(1.0 - ratio);
-        _currentRadius = _sphereMin + ((_sphereMax - _sphereMin) * 0.15 * eased);
-        _pillText = WatchUi.loadResource(Rez.Strings.PillComplete);
     }
 
     private function _applySessionState(state) {
@@ -437,6 +487,7 @@ class SleepBetterView extends WatchUi.View {
         _controller.stop();
         _state = AppState.STATE_COMPLETE;
         _outroElapsed = 0.0;
+        _outroPhase = 0;  // Reset outro phase
         _pillText = WatchUi.loadResource(Rez.Strings.PillComplete);
         _countdownText = "0";
     }
@@ -475,13 +526,25 @@ class SleepBetterView extends WatchUi.View {
         if (_state == AppState.STATE_IDLE) {
             // Idle: NO title, just tap hint
             Effects.drawPlayHint(dc, _centerX, _centerY, _currentRadius, COLOR_TEXT_MUTED);
+        } else if (_state == AppState.STATE_INTRO_PULSE) {
+            // Intro: Show intro message (Get Ready / Inhale)
+            if (_introMessage != null && _introMessage.length() > 0) {
+                dc.setColor(COLOR_TEXT_PRIMARY, Gfx.COLOR_TRANSPARENT);
+                dc.drawText(
+                    _centerX.toNumber(),
+                    _centerY.toNumber(),
+                    Gfx.FONT_LARGE,
+                    _introMessage,
+                    Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+                );
+            }
         } else if (_state == AppState.STATE_RUNNING || _state == AppState.STATE_PAUSED) {
             // Session: ONLY countdown (large number) and timer above
             _drawCountdown(dc);
             _drawSessionTimer(dc);
         } else if (_state == AppState.STATE_COMPLETE) {
-            // Complete: Just "Well Done" text
-            _drawWellDone(dc);
+            // Complete: Phased outro animation
+            _drawOutro(dc);
         }
     }
 
@@ -566,16 +629,49 @@ class SleepBetterView extends WatchUi.View {
         );
     }
 
-    private function _drawWellDone(dc) {
-        // Just "Well Done" text - simple and clean
-        dc.setColor(COLOR_TEXT_PRIMARY, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(
-            _centerX.toNumber(),
-            _centerY.toNumber(),
-            Gfx.FONT_LARGE,
-            "Well Done",
-            Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
-        );
+    private function _drawOutro(dc) {
+        // HTML Prototype phases
+        if (_outroPhase <= 0) {
+            // Phase 0: Sphere fading (0-1.2s)
+            // Sphere already rendered in main render function
+        } else if (_outroPhase == 1) {
+            // Phase 1: Outro heart screen appearing (1.2-2.2s)
+            // Draw full-screen semi-transparent background
+            dc.setColor(0x140707, Gfx.COLOR_TRANSPARENT);  // rgba(20,7,7,.85) from HTML
+            dc.fillCircle(_centerX.toNumber(), _centerY.toNumber(),
+                         (_progressRadius * 0.9).toNumber());
+        } else if (_outroPhase == 2 || _outroPhase == 3) {
+            // Phase 2-3: "Well Done" text (2.2-6.0s)
+            dc.setColor(COLOR_TEXT_PRIMARY, Gfx.COLOR_TRANSPARENT);
+            dc.drawText(
+                _centerX.toNumber(),
+                _centerY.toNumber(),
+                Gfx.FONT_LARGE,
+                WatchUi.loadResource(Rez.Strings.OutroWellDone),
+                Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+            );
+        } else {
+            // Phase 4: Heart message (6.0s+)
+            dc.setColor(COLOR_TEXT_PRIMARY, Gfx.COLOR_TRANSPARENT);
+            dc.drawText(
+                _centerX.toNumber(),
+                (_centerY - 30).toNumber(),
+                Gfx.FONT_LARGE,
+                WatchUi.loadResource(Rez.Strings.OutroWellDone),
+                Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+            );
+            dc.setColor(COLOR_TEXT_MUTED, Gfx.COLOR_TRANSPARENT);
+            dc.drawText(
+                _centerX.toNumber(),
+                (_centerY + 30).toNumber(),
+                Gfx.FONT_SMALL,
+                WatchUi.loadResource(Rez.Strings.OutroHeart),
+                Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+            );
+        }
+
+        // Show completion stats below
+        _drawSessionTimer(dc);
     }
 
     private function _drawTimers(dc) {
