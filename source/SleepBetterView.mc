@@ -324,14 +324,11 @@ class SleepBetterView extends WatchUi.View {
             // Phase 2: "Get Ready" with gentle 6s pulse (two 3s cycles)
             _introMessage = WatchUi.loadResource(Rez.Strings.IntroGetReady);
             var pulseTime = _introElapsed - 0.8;  // 0.8 to 7.0 = 6.2s
-            var cycleRatio = pulseTime / 6.2;  // Normalize to 0-1
-            var cycleProgress = (cycleRatio * 2.0);  // Scale to 0-2 for two cycles
-            // Create triangle wave: 0->1->0->1->0
-            var waveValue = cycleProgress % 1.0;
-            if ((cycleProgress.toNumber() % 2) == 1) {
-                waveValue = 1.0 - waveValue;  // Reverse second cycle
-            }
-            var eased = EasingFunctions.easeInOutQuad(waveValue);
+            // Create simple sinusoidal pulse for two 3-second cycles
+            var cycles = (pulseTime / 6.2) * 2.0;  // 0-2 range for two cycles
+            var angle = cycles * Math.PI;  // 0-2π
+            var wave = (Math.sin(angle) + 1.0) / 2.0;  // 0-1 range, normalized sine
+            var eased = EasingFunctions.easeInOutQuad(wave);
             _currentRadius = _sphereMin + ((_sphereMax * 0.55) * eased);  // Gentle pulse to 55% max
         } else if (_introElapsed < 7.9) {
             // Phase 3: Transition - sphere settles to min
