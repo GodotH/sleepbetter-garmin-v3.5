@@ -15,5 +15,9 @@
         <string id="PhaseComplete">Complete</string>
         <string id="OutroHeadline">Well Done</string>
         <string id="OutroMessage">Enjoy a calm night&#39;s sleep</string>
+        <string id="IntroGetReady">Get Ready</string>
+        <string id="IntroInhale">Inhale</string>
+        <string id="OutroWellDone">Well Done</string>
+        <string id="OutroHeart">❤ Your body thanks you ❤</string>
     </strings>
 </resources>
