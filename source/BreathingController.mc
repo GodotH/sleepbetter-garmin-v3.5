@@ -2,8 +2,8 @@
 // BreathingController.mc
 // 4-7-8 Breathing App - Session State Machine
 // ============================================================================
-// VERSION: v.01-beta
-// TIMESTAMP: 25-1021-12:51
+// VERSION: v.02.5
+// TIMESTAMP: 25-1026-00:00
 // DEVICE: Garmin Venu 3 (454×454px)
 // ============================================================================
 //
@@ -11,16 +11,16 @@
 //   Orchestrates breathing session phases, timing, and state transitions.
 //   Manages session plan execution with configurable breathing patterns.
 //
-// CURRENT SESSION PLAN (v.01-beta):
-//   - Warmup: 1.0 min (4-4-5 pattern)
-//   - Main: 9.0 min (4-7-8 pattern)
-//   - Total: 10 minutes
+// CURRENT SESSION PLAN (v.02.5):
+//   - Block 1: 0.65 min / 39s (4-4-5 pattern, 3 cycles)
+//   - Block 2: 1.75 min / 105s (4-5-6 pattern, 7 cycles)
+//   - Block 3: 7.60 min / 456s (4-7-8 pattern, 24 cycles)
+//   - Total: 10.00 minutes / 600 seconds exactly
 //
-// PRD TARGET (v1.0.0 - Future):
-//   - Warm-up: 1.5 min (4-4-5 pattern)
-//   - Transition: 1.5 min (4-5-6 pattern)
-//   - Main: 7.0 min (4-7-8 pattern)
-//   - Total: 10 minutes
+// TIMING BREAKDOWN:
+//   - 4-4-5: 13s/cycle × 3 = 39s
+//   - 4-5-6: 15s/cycle × 7 = 105s
+//   - 4-7-8: 19s/cycle × 24 = 456s
 //
 // ============================================================================
 
@@ -377,17 +377,22 @@ class BreathingController {
         return fallback;
     }
 
-    // Default session plan: 1 minute ramp + 9 minute main 4-7-8 pattern = 10 minutes total
+    // Default session plan: 0.65min (3 cycles) + 1.75min (7 cycles) + 7.60min (24 cycles) = 10 minutes exact
     function getDefaultPlan() {
         return [
             {
-                "label" => "Ramp 4-4-5",
-                "minutes" => 1.0,
+                "label" => "Warm-up 4-4-5",
+                "minutes" => 0.65,
                 "pattern" => { "inhale" => 4.0, "hold" => 4.0, "exhale" => 5.0 }
             },
             {
-                "label" => "4-7-8",
-                "minutes" => 9.0,
+                "label" => "Transition 4-5-6",
+                "minutes" => 1.75,
+                "pattern" => { "inhale" => 4.0, "hold" => 5.0, "exhale" => 6.0 }
+            },
+            {
+                "label" => "Main 4-7-8",
+                "minutes" => 7.60,
                 "pattern" => { "inhale" => 4.0, "hold" => 7.0, "exhale" => 8.0 }
             }
         ];
