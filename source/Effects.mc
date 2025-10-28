@@ -8,16 +8,27 @@ using Toybox.Math;
 module Effects {
 
     function drawBackground(dc, cx, cy, radius, accentColor, backgroundColor) {
-        // HTML prototype uses solid deep black-crimson background
-        // Very subtle radial gradients (10% opacity) - too subtle for MonkeyC to simulate well
-        // Using solid background for clean, dark look
+        // UI-review.md: Draw at least two large, low-alpha circles in crimson tones
+        // to approximate the HTML prototype's layered radial gradients
         dc.setColor(Gfx.COLOR_TRANSPARENT, backgroundColor);
         dc.clear();
 
-        // No accent circles - keep it simple and dark like HTML prototype
+        // Large gradient-like circles for depth (70% and 50% of screen)
+        var x = cx.toNumber();
+        var y = cy.toNumber();
+
+        // Outer circle (70% of screen, very subtle)
+        dc.setColor(0x2A0808, Gfx.COLOR_TRANSPARENT);  // Very dark crimson with low alpha feel
+        dc.fillCircle(x, y, (radius * 0.70).toNumber());
+
+        // Inner circle (50% of screen, slightly brighter)
+        dc.setColor(0x3A0C0C, Gfx.COLOR_TRANSPARENT);  // Crimson-900 from HTML
+        dc.fillCircle(x, y, (radius * 0.50).toNumber());
     }
 
     function drawProgressRing(dc, cx, cy, radius, thickness, progress, trackColor, fillColor) {
+        // UI-review.md: HTML prototype keeps track visible but hides the progress arc
+        // We draw only the dark track ring, skip the bright arc to match prototype
         var clamped = progress;
         if (clamped < 0.0) { clamped = 0.0; }
         if (clamped > 1.0) { clamped = 1.0; }
@@ -27,39 +38,39 @@ module Effects {
         var r = radius.toNumber();
         var t = thickness.toNumber();
 
-        // Background track
+        // Background track only (matches HTML prototype track-only appearance)
         dc.setPenWidth(t);
         dc.setColor(trackColor, Gfx.COLOR_TRANSPARENT);
         dc.drawCircle(x, y, r);
 
-        if (clamped <= 0.0) {
-            return;
-        }
-
-        var sweep = 360.0 * clamped;
-        var endAngle = (90 - sweep).toNumber();
-
-        // Glow layer (slightly larger, dimmer) for depth
-        dc.setColor(0x7E1717, Gfx.COLOR_TRANSPARENT);
-        dc.setPenWidth(t + 4);
-        dc.drawArc(x, y, r + 2, Gfx.ARC_CLOCKWISE, 90, endAngle);
-
-        // Main progress arc (pure red)
-        dc.setColor(fillColor, Gfx.COLOR_TRANSPARENT);
-        dc.setPenWidth(t);
-        dc.drawArc(x, y, r, Gfx.ARC_CLOCKWISE, 90, endAngle);
+        // SKIP progress arc drawing - UI-review.md specifies hiding the arc
+        // Progress value is still tracked internally for stats/timing
+        // but not rendered visually to match HTML prototype aesthetic
     }
 
-    function drawSphere(dc, cx, cy, radius, coreColor, rimColor, highlightColor) {
-        // SIMPLE: Just ONE solid filled circle in red
-        // No extra rings, no noise, no artifacts
+    function drawSphere(dc, cx, cy, radius, coreColor, rimColor) {
+        // Simplified dual-tone sphere (core + rim) to avoid flat disk look
         var x = cx.toNumber();
         var y = cy.toNumber();
         var r = radius.toNumber();
 
-        // Single filled circle - solid red like HTML prototype
-        dc.setColor(0xFF0000, 0xFF0000);  // Pure red fill
-        dc.fillCircle(x, y, r);
+        // Safety check for valid radius
+        if (r < 1) { r = 1; }
+
+        // 1. Draw dark core circle (90% of radius)
+        var coreRadius = (r * 0.90).toNumber();
+        if (coreRadius < 1) { coreRadius = 1; }
+        dc.setColor(coreColor, coreColor);
+        dc.fillCircle(x, y, coreRadius);
+
+        // 2. Draw rim (outer circle) for depth
+        var rimWidth = (r * 0.12).toNumber();
+        if (rimWidth < 1) { rimWidth = 1; }
+        if (rimWidth > 20) { rimWidth = 20; }
+        dc.setColor(rimColor, Gfx.COLOR_TRANSPARENT);
+        dc.setPenWidth(rimWidth);
+        dc.drawCircle(x, y, r);
+
     }
 
     function drawGuide(dc, cx, cy, baseRadius, ratio, color) {
