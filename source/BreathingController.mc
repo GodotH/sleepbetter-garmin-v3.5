@@ -139,10 +139,19 @@ class BreathingController {
     }
 
     function getSessionProgress() {
-        if (_sessionDuration <= 0.0) { return 0.0; }
+        if (_sessionDuration <= 0.0) {
+            System.println("ERROR: _sessionDuration is 0!");
+            return 0.0;
+        }
         var progress = _sessionElapsed / _sessionDuration;
         if (progress < 0.0) { progress = 0.0; }
         if (progress > 1.0) { progress = 1.0; }
+
+        // Log every 10 seconds for debugging
+        var elapsedInt = _sessionElapsed.toNumber();
+        if (elapsedInt > 0 && elapsedInt % 10 == 0) {
+            System.println("Progress: " + elapsedInt + "/" + _sessionDuration.toNumber() + "s = " + (progress * 100).toNumber() + "%");
+        }
         return progress;
     }
 
@@ -324,6 +333,7 @@ class BreathingController {
             _plan = getDefaultPlan();
         }
 
+        System.println("=== REBUILDING SESSION PLAN ===");
         for (var i = 0; i < _plan.size(); i += 1) {
             var block = _plan[i];
             if (block == null || !block.hasKey("pattern")) { continue; }
@@ -348,6 +358,9 @@ class BreathingController {
             var blockDuration = cycleDuration * cycles;
             _sessionDuration += blockDuration;
 
+            System.println("Block " + i + ": " + inhale + "-" + hold + "-" + exhale +
+                          " | " + cycles + " cycles | " + blockDuration + "s");
+
             var meta = {
                 "label" => block.hasKey("label") ? block["label"] : "",
                 "pattern" => {
@@ -363,6 +376,8 @@ class BreathingController {
             _blocks.add(meta);
         }
 
+        System.println("TOTAL SESSION DURATION: " + _sessionDuration + " seconds (" + (_sessionDuration / 60.0) + " minutes)");
+        System.println("================================");
         reset();
     }
 

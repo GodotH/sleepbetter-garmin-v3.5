@@ -1,6 +1,6 @@
 <resources>
     <strings>
-        <string id="AppName">4-7-8 Breathing</string>
+        <string id="AppName">SleepBetter</string>
         <string id="TapInstruction">Tap to Begin</string>
         <string id="PillReady">Ready</string>
         <string id="PillInhale">Inhale</string>

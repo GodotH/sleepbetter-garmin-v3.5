@@ -27,8 +27,7 @@ module Effects {
     }
 
     function drawProgressRing(dc, cx, cy, radius, thickness, progress, trackColor, fillColor) {
-        // UI-review.md: HTML prototype keeps track visible but hides the progress arc
-        // We draw only the dark track ring, skip the bright arc to match prototype
+        // Draw progress ring with track and fill arc showing session progress
         var clamped = progress;
         if (clamped < 0.0) { clamped = 0.0; }
         if (clamped > 1.0) { clamped = 1.0; }
@@ -38,14 +37,22 @@ module Effects {
         var r = radius.toNumber();
         var t = thickness.toNumber();
 
-        // Background track only (matches HTML prototype track-only appearance)
+        // Background track
         dc.setPenWidth(t);
         dc.setColor(trackColor, Gfx.COLOR_TRANSPARENT);
         dc.drawCircle(x, y, r);
 
-        // SKIP progress arc drawing - UI-review.md specifies hiding the arc
-        // Progress value is still tracked internally for stats/timing
-        // but not rendered visually to match HTML prototype aesthetic
+        // Progress arc - draw if there's any progress
+        if (clamped > 0.0) {
+            var degrees = (clamped * 360.0).toNumber();
+            dc.setColor(fillColor, Gfx.COLOR_TRANSPARENT);
+            dc.setPenWidth(t);
+
+            // Draw arc from top (270 degrees in Garmin = 12 o'clock) clockwise
+            var startAngle = 270;
+            var endAngle = (270 + degrees) % 360;
+            dc.drawArc(x, y, r, Gfx.ARC_CLOCKWISE, startAngle, endAngle);
+        }
     }
 
     function drawSphere(dc, cx, cy, radius, coreColor, rimColor) {

@@ -125,10 +125,10 @@ class SleepBetterView extends WatchUi.View {
         _height = 0;
         _centerX = 0.0;
         _centerY = 0.0;
-        _sphereMin = 60.0;
-        _sphereMax = 120.0;
-        _progressRadius = 140.0;
-        _progressThickness = 12.0;
+        _sphereMin = 65.0;
+        _sphereMax = 160.0;
+        _progressRadius = 219.5;  // Touches screen edge (227 - 7.5)
+        _progressThickness = 15.0;
 
         _currentRadius = _sphereMin;
         _progressValue = 0.0;
@@ -175,27 +175,25 @@ class SleepBetterView extends WatchUi.View {
         var minDim = (_width < _height) ? _width : _height;  // 454px on Venu 3
 
         // ---------------------------------------------------------------------
-        // PROGRESS RING SCALING - HTML PROTOTYPE EXACT MATCH
+        // PROGRESS RING SCALING - TOUCHING SCREEN EDGE
         // ---------------------------------------------------------------------
-        // HTML: --ring-size: min(300px, 76vw) → 76% of viewport width
-        // Venu 3: 454 × 0.76 = 345px diameter → 172.5px radius
+        // Progress ring should touch the screen edge for maximum visual impact
+        // Radius = half of screen width, minus half thickness to account for stroke
         //
-        _progressRadius = minDim * 0.38;  // 172.5px on Venu 3 (76% screen width)
-        _progressThickness = 10.0;         // 10px stroke
+        _progressThickness = 15.0;         // 15px stroke
+        _progressRadius = (minDim / 2.0) - (_progressThickness / 2.0);  // 227 - 7.5 = 219.5px on Venu 3
 
         // ---------------------------------------------------------------------
-        // BREATHING SPHERE SCALING - HTML PROTOTYPE EXACT MATCH
+        // BREATHING SPHERE SCALING - OPTIMIZED FOR VENU 3
         // ---------------------------------------------------------------------
-        // HTML: --sphere-size: min(235px, 60vw) → 60% of viewport width
-        // Venu 3: 454 × 0.60 = 272px diameter → 136px radius
-        // Min: 33% of max sphere (PRD requirement: 0.33x-1.0x range)
+        // Larger sphere for better visibility and impact
+        // Venu 3 (454px):
+        //   Max: 160px radius (35.2% of screen width)
+        //   Min: 65px radius (14.3% of screen width)
+        //   Ratio: 65/160 = 0.406 (40.6% of max)
         //
-        // Venu 3:
-        //   Max: 454 × 0.30 = 136px (60% diameter)
-        //   Min: 136 × 0.33 = 45px
-        //
-        _sphereMax = minDim * 0.30;   // 136px on Venu 3 (HTML prototype exact)
-        _sphereMin = _sphereMax * 0.33;        // 45px on Venu 3 (PRD compliant)
+        _sphereMax = minDim * 0.352;   // 160px on Venu 3
+        _sphereMin = _sphereMax * 0.406;        // 65px on Venu 3
         _currentRadius = _sphereMin;           // Start at minimum size
 
         WatchUi.requestUpdate();
@@ -427,7 +425,9 @@ class SleepBetterView extends WatchUi.View {
         }
 
         _phaseText = _phaseString(phase);
-        _countdownText = _formatCountdown(state["phaseRemaining"]);
+        // Calculate elapsed from remaining: elapsed = duration - remaining
+        var phaseElapsed = state["phaseDuration"] - state["phaseRemaining"];
+        _countdownText = _formatCountdownUp(phaseElapsed, state["phaseDuration"]);
         _totalText = _formatElapsed(state["sessionElapsed"]);
 
         if (state.hasKey("pattern")) {
@@ -513,17 +513,24 @@ class SleepBetterView extends WatchUi.View {
         dc.setColor(Gfx.COLOR_TRANSPARENT, COLOR_BACKGROUND);
         dc.clear();
 
-        Effects.drawBackground(dc, _centerX, _centerY, _progressRadius, COLOR_BACKGROUND_ACCENT, COLOR_BACKGROUND);
-        Effects.drawProgressRing(dc, _centerX, _centerY, _progressRadius, _progressThickness, _progressValue, COLOR_RING_TRACK, COLOR_RING_FILL);
+        // Skip all graphical objects during INTRO - show only text
+        if (_state != AppState.STATE_INTRO_PULSE) {
+            Effects.drawBackground(dc, _centerX, _centerY, _progressRadius, COLOR_BACKGROUND_ACCENT, COLOR_BACKGROUND);
+            Effects.drawProgressRing(dc, _centerX, _centerY, _progressRadius, _progressThickness, _progressValue, COLOR_RING_TRACK, COLOR_RING_FILL);
 
-        // Breath guide pulse (UI-review.md requirement #6)
-        if (_state == AppState.STATE_RUNNING && _guideElapsed < GUIDE_DURATION) {
-            var guideRatio = _guideElapsed / GUIDE_DURATION;
-            Effects.drawGuide(dc, _centerX, _centerY, _currentRadius, guideRatio, COLOR_GUIDE);
+            // Breath guide pulse (UI-review.md requirement #6)
+            if (_state == AppState.STATE_RUNNING && _guideElapsed < GUIDE_DURATION) {
+                var guideRatio = _guideElapsed / GUIDE_DURATION;
+                // Invert ratio for EXHALE phase so pulse contracts instead of expands
+                if (_sessionState != null && _sessionState["phase"] == BreathingPhase.PHASE_EXHALE) {
+                    guideRatio = 1.0 - guideRatio;
+                }
+                Effects.drawGuide(dc, _centerX, _centerY, _currentRadius, guideRatio, COLOR_GUIDE);
+            }
+
+            // Draw sphere with enhanced core+rim styling
+            Effects.drawSphere(dc, _centerX, _centerY, _currentRadius, COLOR_SPHERE_CORE, COLOR_SPHERE_RIM);
         }
-
-        // Draw sphere with enhanced core+rim styling
-        Effects.drawSphere(dc, _centerX, _centerY, _currentRadius, COLOR_SPHERE_CORE, COLOR_SPHERE_RIM);
 
         // CLEAN MINIMAL UI - HTML prototype has NO header clutter
         if (_state == AppState.STATE_IDLE) {
@@ -588,7 +595,7 @@ class SleepBetterView extends WatchUi.View {
             _centerX.toNumber(),
             (_height * 0.04).toNumber(),
             Gfx.FONT_TINY,  // Use smaller font to fit full title
-            "4-7-8 Red Breathing",
+            "SleepBetter",
             Gfx.TEXT_JUSTIFY_CENTER
         );
     }
@@ -682,10 +689,12 @@ class SleepBetterView extends WatchUi.View {
     }
 
     private function _drawTimers(dc) {
-        // HTML prototype: timer/pattern positioned with equal spacing above/below sphere
-        // With 136px sphere radius, use 72% offset for proper visual balance
-        // This ensures equal whitespace between timer-to-sphere and sphere-to-pattern
-        var offset = _sphereMax * 0.72;  // ~98px on Venu 3 for balanced spacing
+        // Position timer and pattern closer to screen edges (40% less whitespace from edge)
+        // With sphere max at 160px and screen center at 227px:
+        // - Timer at top: 227 - 160 = 67px from top edge
+        // - Pattern at bottom: 227 + 160 = 387px from top = 67px from bottom edge
+        // This gives symmetric 67px margins from screen edges
+        var offset = _sphereMax * 1.0;  // Position text at sphere edge for minimal whitespace
 
         // Total timer (above sphere)
         var totalY = _centerY - offset;
@@ -728,6 +737,18 @@ class SleepBetterView extends WatchUi.View {
         var s = seconds;
         if (s < 0.0) { s = 0.0; }
         var value = Math.ceil(s).toNumber();
+        return value.toString();
+    }
+
+    private function _formatCountdownUp(elapsed, duration) {
+        // Count UP from 0 to target (e.g., 0→4, 0→7, 0→8)
+        // This makes breathing more intuitive: counting up = filling lungs
+        if (elapsed == null || elapsed < 0.0) { elapsed = 0.0; }
+        if (duration == null || duration <= 0.0) { duration = 1.0; }
+        var value = Math.floor(elapsed).toNumber();
+        var maxValue = Math.floor(duration).toNumber();
+        // Cap at target to avoid showing values beyond duration
+        if (value > maxValue) { value = maxValue; }
         return value.toString();
     }
 
