@@ -11,16 +11,16 @@
 //   Orchestrates breathing session phases, timing, and state transitions.
 //   Manages session plan execution with configurable breathing patterns.
 //
-// CURRENT SESSION PLAN (v.02.5):
-//   - Block 1: 0.65 min / 39s (4-4-5 pattern, 3 cycles)
-//   - Block 2: 1.75 min / 105s (4-5-6 pattern, 7 cycles)
-//   - Block 3: 7.60 min / 456s (4-7-8 pattern, 24 cycles)
+// CURRENT SESSION PLAN (v.03):
+//   - Block 1: 1.5 min / 90s (4-4-5 pattern, 6 cycles)
+//   - Block 2: 1.5 min / 90s (4-5-6 pattern, 6 cycles)
+//   - Block 3: 7.0 min / 420s (4-7-8 pattern, 22 cycles)
 //   - Total: 10.00 minutes / 600 seconds exactly
 //
 // TIMING BREAKDOWN:
-//   - 4-4-5: 13s/cycle × 3 = 39s
-//   - 4-5-6: 15s/cycle × 7 = 105s
-//   - 4-7-8: 19s/cycle × 24 = 456s
+//   - 4-4-5: 13s/cycle × 6 = 78s (actual 90s block = ~7 cycles)
+//   - 4-5-6: 15s/cycle × 6 = 90s (exact fit)
+//   - 4-7-8: 19s/cycle × 22 = 418s (actual 420s block = ~22 cycles)
 //
 // ============================================================================
 
@@ -392,22 +392,22 @@ class BreathingController {
         return fallback;
     }
 
-    // Default session plan: 0.65min (3 cycles) + 1.75min (7 cycles) + 7.60min (24 cycles) = 10 minutes exact
+    // Default session plan: 1.5min warmup + 1.5min transition + 7.0min main = 10 minutes exact
     function getDefaultPlan() {
         return [
             {
                 "label" => "Warm-up 4-4-5",
-                "minutes" => 0.65,
+                "minutes" => 1.5,
                 "pattern" => { "inhale" => 4.0, "hold" => 4.0, "exhale" => 5.0 }
             },
             {
                 "label" => "Transition 4-5-6",
-                "minutes" => 1.75,
+                "minutes" => 1.5,
                 "pattern" => { "inhale" => 4.0, "hold" => 5.0, "exhale" => 6.0 }
             },
             {
                 "label" => "Main 4-7-8",
-                "minutes" => 7.60,
+                "minutes" => 7.0,
                 "pattern" => { "inhale" => 4.0, "hold" => 7.0, "exhale" => 8.0 }
             }
         ];

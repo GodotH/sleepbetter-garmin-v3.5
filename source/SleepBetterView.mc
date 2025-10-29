@@ -69,7 +69,7 @@ class SleepBetterView extends WatchUi.View {
     // Font constants for canvas text rendering
     const FONT_SIZE_TITLE = Gfx.FONT_SMALL;
     const FONT_SIZE_PILL = Gfx.FONT_TINY;
-    const FONT_SIZE_PHASE_WATERMARK = Gfx.FONT_LARGE;
+    const FONT_SIZE_PHASE_WATERMARK = Gfx.FONT_NUMBER_HOT;  // Changed to FONT_NUMBER_HOT
     const FONT_SIZE_COUNTDOWN = Gfx.FONT_NUMBER_THAI_HOT;
     const FONT_SIZE_TIMER = Gfx.FONT_SMALL;
     const FONT_SIZE_PATTERN = Gfx.FONT_TINY;
@@ -606,9 +606,8 @@ class SleepBetterView extends WatchUi.View {
             return;
         }
 
-        // Phase watermark appears behind countdown with low opacity
-        // MonkeyC doesn't support alpha in colors directly, so we use a dimmer version
-        dc.setColor(COLOR_WATERMARK, Gfx.COLOR_TRANSPARENT);
+        // Phase watermark appears behind countdown - now in pure red
+        dc.setColor(0xFF0000, Gfx.COLOR_TRANSPARENT);  // Pure red instead of COLOR_WATERMARK
         dc.drawText(
             _centerX.toNumber(),
             _centerY.toNumber(),
@@ -696,14 +695,18 @@ class SleepBetterView extends WatchUi.View {
         // This gives symmetric 67px margins from screen edges
         var offset = _sphereMax * 1.0;  // Position text at sphere edge for minimal whitespace
 
-        // Total timer (above sphere)
+        // Session countdown timer (above sphere) - counts DOWN from 10:00 to 0:00
         var totalY = _centerY - offset;
         dc.setColor(COLOR_TEXT_MUTED, Gfx.COLOR_TRANSPARENT);
+        var countdownDisplay = _totalText;  // Default to elapsed format
+        if (_sessionState != null && _sessionState.hasKey("sessionElapsed") && _sessionState.hasKey("sessionDuration")) {
+            countdownDisplay = _formatSessionCountdown(_sessionState["sessionElapsed"], _sessionState["sessionDuration"]);
+        }
         dc.drawText(
             _centerX.toNumber(),
             totalY.toNumber(),
             FONT_SIZE_TIMER,
-            _totalText,
+            countdownDisplay,
             Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
         );
 
@@ -742,11 +745,17 @@ class SleepBetterView extends WatchUi.View {
 
     private function _formatCountdownUp(elapsed, duration) {
         // Count UP from 0 to target (e.g., 0→4, 0→7, 0→8)
-        // This makes breathing more intuitive: counting up = filling lungs
+        // Uses formula: T(sec)/(T(sec)+1) to ensure final number displays
+        // For 8s duration: shows 0,1,2,3,4,5,6,7,8 (9 values across 8 seconds)
         if (elapsed == null || elapsed < 0.0) { elapsed = 0.0; }
         if (duration == null || duration <= 0.0) { duration = 1.0; }
-        var value = Math.floor(elapsed).toNumber();
+
+        // Scale elapsed time to show final target number
+        // Formula: elapsed * (duration + 1) / duration
+        var scaledElapsed = elapsed * (duration + 1.0) / duration;
+        var value = Math.floor(scaledElapsed).toNumber();
         var maxValue = Math.floor(duration).toNumber();
+
         // Cap at target to avoid showing values beyond duration
         if (value > maxValue) { value = maxValue; }
         return value.toString();
@@ -755,6 +764,20 @@ class SleepBetterView extends WatchUi.View {
     private function _formatElapsed(elapsed) {
         if (elapsed < 0.0) { elapsed = 0.0; }
         var totalSeconds = Math.floor(elapsed).toNumber();
+        var minutes = Math.floor(totalSeconds / 60).toNumber();
+        var seconds = (totalSeconds - (minutes * 60)).toNumber();
+        var secondsStr = seconds.toString();
+        if (seconds < 10) {
+            secondsStr = "0" + secondsStr;
+        }
+        return minutes.toString() + ":" + secondsStr;
+    }
+
+    private function _formatSessionCountdown(elapsed, totalDuration) {
+        // Countdown from total duration to 0:00 (e.g., 10:00 → 0:00)
+        var remaining = totalDuration - elapsed;
+        if (remaining < 0.0) { remaining = 0.0; }
+        var totalSeconds = Math.floor(remaining).toNumber();
         var minutes = Math.floor(totalSeconds / 60).toNumber();
         var seconds = (totalSeconds - (minutes * 60)).toNumber();
         var secondsStr = seconds.toString();
