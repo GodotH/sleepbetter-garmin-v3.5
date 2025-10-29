@@ -5,15 +5,22 @@
 Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, maintaining the minimalist red-themed night interface and single-tap interaction model.
 
 ## Version
-1.0.0 - Initial Release (No haptic, no HR tracking)
+**Current**: v3.6 - Premium Design Release (Golden Ratio + Color Hierarchy)
+**Target**: v1.0.0 - Initial Release (No haptic, no HR tracking)
 
 ---
 
 ## Core Features
 
-### 0. INTRO SCREEN
-- Big play button, white against red circle
-- Red circle fills watch screen
+### 0. START SCREEN (v3.6)
+- **Golden ratio layout** for harmonious visual balance
+- App title "SleepBetter" at φ point from top (0.236)
+- Technique name "4-7-8 breathing" at φ point from bottom (0.764)
+- Session duration "10 min session" at nested φ (0.882)
+- **Premium circular play button** in center:
+  - 35% of max sphere size
+  - Crimson filled circle with 2px red accent ring
+  - Centered white play triangle
 - Single tap to start session
 
 ### 1. Session Structure
@@ -33,12 +40,19 @@ Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, ma
 - **Muted text**: #C9B5B5
 - **Countdown white**: #FFFFFF
 
-#### Core UI Components (v3.5.1 Implementation)
+#### Core UI Components (v3.6 Implementation)
 - **Breathing sphere**: Scales 0.33x to 1.0x (center of screen)
 - **Progress ring**: 44 radius units (around sphere)
-- **Phase watermark**: "INHALE/HOLD/EXHALE" in center (red, FONT_NUMBER_HOT)
-- **Session timer**: Top position, counts DOWN 10:00→0:00 (muted gray)
-- **Phase countdown**: Bottom position, 0-8 display (muted gray, FONT_MEDIUM)
+- **Phase watermark**: "INHALE/HOLD/EXHALE" in center (pure red #FF0000, FONT_NUMBER_MEDIUM)
+  - Smooth 0.6s fade-in on phase transitions
+  - Renders on TOP of all elements
+- **Session timer**: Top position, counts DOWN 10:00→0:00 (pure red #FF0000)
+  - High visibility and emphasis
+- **Phase countdown pill**: Bottom position, 0-8 display
+  - Circular pill (28px radius) with crimson fill
+  - Crimson border ring (2px) matching sphere rim
+  - Muted text (COLOR_TEXT_MUTED) for readability
+  - Subtle pulse to pure red on countdown reset to "0"
 - **Pattern display**: REMOVED (simplified interface)
 - **Phase pill indicator**: Current breathing phase
 
@@ -53,12 +67,11 @@ Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, ma
 
 ### 4. Animation Sequences
 
-#### Intro (5.5 seconds)
-1. Play button fadeout (0.3s)
-2. Sphere appears with pulse (1.6s cycle)
-3. "Get Ready" message (4.5s total)
-4. "Inhale" splash (1s)
-5. Begin session
+#### Intro (10 seconds) - v3.6
+1. Play button fadeout (0.8s)
+2. "Get Ready" message with gentle pulse (4.6s)
+3. "Relax now" message with gentle pulse (4.6s)
+4. Begin session with 1s smooth fade-in
 
 #### Breathing Animations
 - **Inhale**: Sphere scales up (ease-in-out)

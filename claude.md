@@ -2,12 +2,19 @@
 
 ## Project Overview
 
-**SleepBetter** is a Garmin Connect IQ app implementing the 4-7-8 breathing technique for the Garmin Venu 3 smartwatch (454×454px AMOLED display). The app provides a minimalist, red-themed night interface with animated breathing guidance through a 10-minute structured session.
+**SleepBetter** is a Garmin Connect IQ app implementing the 4-7-8 breathing technique for the Garmin Venu 3 smartwatch (454×454px AMOLED display). The app provides a minimalist, red-themed night interface with animated breathing guidance through a 10-minute structured session featuring premium design principles including golden ratio layout and smooth cinematic transitions.
 
-**Current Version**: v3.5.1
+**Current Version**: v3.6
 **Language**: MonkeyC (Garmin's proprietary language)
 **Target Device**: Garmin Venu 3 (454×454 resolution)
 **Development Platform**: Windows with Garmin Connect IQ SDK
+
+**Design Highlights (v3.6)**:
+- Golden ratio-based layout for natural visual harmony
+- Circular pill design for phase countdown
+- 1-second cinematic fade-in for breathing screen
+- Smooth 0.6s phase watermark transitions
+- Screen wake lock during active sessions
 
 ---
 
@@ -158,7 +165,7 @@ git push origin main
 
 ---
 
-## Current Implementation (v3.5.1)
+## Current Implementation (v3.6)
 
 ### Session Timing
 - **Block 1 (Warmup)**: 1.5 minutes - 4-4-5 pattern (6 cycles)
@@ -169,26 +176,28 @@ git push origin main
 ### Visual Hierarchy
 ```
 ┌─────────────────────────────────┐
-│   SESSION TIMER (top)           │  ← 10:00→0:00 (muted gray, FONT_SMALL)
+│   SESSION TIMER (top)           │  ← 10:00→0:00 (pure red #FF0000, FONT_SMALL)
 │                                 │
-│   PHASE WATERMARK (center)      │  ← INHALE/HOLD/EXHALE (red, FONT_NUMBER_HOT)
+│   PHASE WATERMARK (center)      │  ← INHALE/HOLD/EXHALE (red, FONT_NUMBER_MEDIUM)
 │   ● BREATHING SPHERE            │  ← Scales 0.33x-1.0x with progress ring
 │                                 │
-│   PHASE COUNTDOWN (bottom)      │  ← 0-8 (muted gray, FONT_MEDIUM)
+│   PHASE COUNTDOWN PILL (bottom) │  ← 0-8 in circular pill (muted, with pulse)
 └─────────────────────────────────┘
 ```
 
-### Color Palette
+### Color Hierarchy (v3.6)
 - **Background**: Pure black (0x000000) for AMOLED efficiency
-- **Phase Watermark**: Pure red (0xFF0000) - high emphasis
+- **Phase Watermark**: Pure red (0xFF0000) - high emphasis, smaller font (FONT_NUMBER_MEDIUM)
+- **Session Timer**: Pure red (0xFF0000) - high visibility and emphasis
 - **Breathing Sphere**: Dark red (0x8B0000)
 - **Progress Ring**: Crimson red
-- **Timers**: Muted gray (0xC9B5B5) - low emphasis
+- **Countdown Pill**: Crimson fill + border, muted text (0xC9B5B5) for readability
 - **Text Primary**: Light gray (0xF6ECEC)
 
 ### Font Sizes (Garmin System Fonts)
-- `FONT_NUMBER_HOT` - Phase watermark (large)
-- `FONT_MEDIUM` - Phase countdown (subtle)
+
+- `FONT_NUMBER_MEDIUM` - Phase watermark (v3.6: reduced from HOT)
+- `FONT_MEDIUM` - Phase countdown pill (subtle)
 - `FONT_SMALL` - Session timer
 - `FONT_TINY` - Phase pill, pattern label (when visible)
 
@@ -497,6 +506,49 @@ start "" "C:\Users\godot\AppData\Roaming\Garmin\ConnectIQ\Sdks\connectiq-sdk-win
 
 ---
 
-**Last Updated**: 2025-10-28 (v3.5.1)
+## Version 3.6 Key Changes
+
+### Premium Design Enhancements
+
+1. **Golden Ratio Layout** - Start screen uses φ (1.618) for harmonious positioning
+2. **Circular Countdown Pill** - 28px radius circle with crimson border wraps phase number
+3. **Color Hierarchy** - Session timer and phase watermark in pure red (#FF0000) for emphasis
+4. **Cinematic Fade-In** - 1s smooth transition from intro to breathing screen
+5. **Dual Fade System** - Session fade (1s) + phase watermark fade (0.6s) work together
+6. **Screen Wake Lock** - Prevents screen sleep during active breathing session
+7. **Pulse Effect** - Subtle red pulse on countdown reset to "0" (first 15% of phase)
+
+### Technical Additions
+
+- `_interpolateColor()` helper function for smooth color transitions
+- `_sessionFadeIn` variable tracking 1-second fade animation
+- `_phaseChangeFadeIn` variable tracking 0.6-second phase watermark fade
+- Golden ratio calculations in `_drawIdleScreen()` (0.236, 0.764, 0.882)
+- Circular pill rendering in `_drawCountdown()` with crimson fill + border
+- Pulse detection using phaseProgress < 0.15 for countdown reset animation
+- Fade application to all graphics (sphere, ring, guide, text)
+- Phase watermark rendered on TOP of all layers
+
+### Color Specifications (v3.6)
+
+- **Session Timer**: Pure red (0xFF0000) - high visibility
+- **Phase Watermark**: Pure red (0xFF0000) - emphasis, FONT_NUMBER_MEDIUM
+- **Countdown Pill Background**: Crimson (COLOR_SPHERE_RIM) with fill
+- **Countdown Pill Text**: Muted (0xC9B5B5) - readable against crimson
+- **Pulse Effect**: Pure red (0xFF0000) flash on zero reset
+
+### User Experience
+
+- Start screen feels mathematically balanced and intentional
+- Phase countdown no longer looks lonely - circular pill creates visual purpose
+- Red session timer creates immediate visual hierarchy and emphasis
+- Smooth transitions eliminate jarring visual changes
+- Pulse effect provides subtle feedback on phase transitions
+- All elements work together harmoniously
+- Premium, polished, professional aesthetic throughout
+
+---
+
+**Last Updated**: 2025-10-29 (v3.6)
 **Maintained By**: Development team
 **Purpose**: AI assistant instructions for continuing development without losing context

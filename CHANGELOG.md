@@ -2,6 +2,162 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v3.6] - 2025-10-29
+
+### Major UX & Visual Enhancements
+
+#### Start Screen Redesign (Golden Ratio)
+- **Applied golden ratio principles** for harmonious visual balance:
+  - App title positioned at φ point from top (0.236 of screen height)
+  - "4-7-8 breathing" positioned at φ point from bottom (0.764)
+  - Session duration positioned using nested golden ratio (0.882)
+  - Creates naturally pleasing, mathematically balanced layout
+- **Cleaner hierarchy**: Removed subtitle clutter, replaced "Tap to Begin" with technique name
+- **Result**: Professional, zen-like aesthetic that feels intentional and refined
+
+#### Phase Countdown Circular Pill
+- **Premium circular design** wrapping the countdown number:
+  - Perfectly round pill (28px radius) for elegant appearance
+  - Filled with crimson color (same as border) for unified appearance
+  - Crimson border ring (2px) matching sphere rim color
+  - Muted text color (COLOR_TEXT_MUTED) for readability against crimson background
+  - **Subtle pulse effect**: Pill pulses to pure red when countdown resets to "0" (first 15% of phase)
+- **Visual cohesion**: Blends seamlessly with breathing sphere and progress ring
+- **Purpose**: Makes countdown stand out while remaining understated
+- **Pulse feedback**: Elegant visual indicator of phase transitions
+- **Result**: No longer looks "lonely" - now feels intentional and polished
+
+#### Session Timer Color Enhancement
+- **Changed session timer** (10:00 countdown at top) to **pure red** (0xFF0000)
+- Matches phase watermark color for visual consistency
+- High visibility and emphasis on remaining time
+- Creates clear visual hierarchy: red timer (important) vs muted pill countdown (subtle)
+
+#### Intro Sequence Improvements
+- **Redesigned intro messages** with better flow:
+  - Phase 1 (0.8-5.4s): "Get Ready" with gentle pulse (4.6s)
+  - Phase 2 (5.4-10.0s): "Relax now" with gentle pulse (4.6s)
+  - Removed "Inhale" splash - session starts immediately after intro
+  - Equal time distribution for both messages
+  - Total intro duration: 10 seconds
+
+#### Phase Watermark Enhancements
+- **Added smooth fade-in animation** (0.6s duration)
+  - Fades from background color to pure red on each phase change
+  - Uses easeOutQuad easing for natural appearance
+  - Eliminates jarring sudden appearance
+  - Implemented via color interpolation (MonkeyC has no native opacity)
+
+- **Reduced font size** from `FONT_NUMBER_HOT` to `FONT_NUMBER_MEDIUM`
+  - Less visually overwhelming
+  - Better balance with other UI elements
+  - Still clearly readable
+
+- **Improved layering**
+  - Phase watermark now renders ON TOP of all other elements
+  - Previously appeared behind progress ring
+  - Creates proper visual hierarchy
+
+#### Start Screen Redesign
+- **Complete visual overhaul** with premium aesthetics:
+  - App title "SleepBetter" at top (12% from top)
+  - Subtitle "4-7-8 Breathing" below title (18% from top)
+  - Circular play button in center with:
+    - Refined proportions (35% of sphere max size)
+    - Outer accent ring (2px stroke in pure red)
+    - Filled circle in crimson red
+    - Centered play triangle with proper alignment
+  - "Tap to Begin" instruction below (82% from top)
+  - Session duration "10 min session" at bottom (90% from top)
+  - Removed old pulsing sphere design
+  - Clean, minimal, professional appearance
+
+#### Breathing Screen Smooth Fade-In
+- **Added 1-second smooth fade-in** after intro completes:
+  - All elements fade in together (sphere, ring, text, watermark)
+  - Uses `easeOutCubic` easing for natural, polished appearance
+  - Color interpolation simulates opacity (MonkeyC has no native opacity)
+  - Eliminates jarring sudden appearance
+- **Layered fade effects**: Session fade-in + phase watermark fade-in work together
+- **Result**: Seamless, cinematic transition from intro to breathing session
+
+#### Screen Wake Lock
+- **Implemented screen stay-awake** during active session
+  - Uses `Attention.backlight(true)` when session starts
+  - Prevents screen from sleeping during breathing exercise
+  - Released when session completes or resets to idle
+  - Ensures uninterrupted breathing experience
+
+### Technical Implementation
+
+#### New Features
+- **Golden ratio layout**: Applied φ (1.618) calculations for start screen positioning
+- **Circular pill component**: 28px radius circle filled with crimson for phase countdown
+- **Pill pulse effect**: Subtle pure red pulse on countdown reset to "0" (first 15% of phase)
+- **Session fade-in system**: `_sessionFadeIn` variable tracking 1s animation
+- **Color interpolation**: `_interpolateColor()` helper for smooth fade effects
+- **Phase watermark fade**: `_phaseChangeFadeIn` variable for 0.6s transitions
+- **Idle screen redesign**: `_drawIdleScreen()` with golden ratio positioning
+- **Session timer color**: Pure red (0xFF0000) for high visibility and emphasis
+- **Countdown pill styling**: Crimson fill + matching border + muted text for readability
+
+#### Files Modified
+- `resources/strings/strings.xml`:
+  - Changed `IntroJustRelax` to `IntroRelaxNow` ("Relax now")
+  - Removed `IntroInhale` string (no longer used)
+
+- `source/SleepBetterView.mc`:
+  - **Golden ratio layout**: Updated `_drawIdleScreen()` with φ positioning (lines 634-696)
+  - **Circular pill**: Redesigned `_drawCountdown()` with unified crimson fill (lines 762-809)
+  - **Pill pulse effect**: Added zero-reset detection and pure red pulse animation (lines 772-787)
+  - **Session timer color**: Changed to pure red (0xFF0000) in `_drawTimers()` (line 879)
+  - **Pill text color**: Kept muted (COLOR_TEXT_MUTED) for readability (line 775)
+  - **Session fade-in**: Added `_sessionFadeIn` variable (line 100)
+  - **Color interpolation**: Created `_interpolateColor()` helper (lines 549-564)
+  - **Fade animations**: Updated `_updateRunning()` for session fade (lines 364-370)
+  - **Graphics fade**: Applied fade to sphere, ring, guide in `_render()` (lines 555-581)
+  - **Text fade**: Updated `_drawPhaseWatermark()`, `_drawCountdown()`, `_drawTimers()` (lines 735-900)
+  - **Intro timeline**: Updated intro logic (lines 311-340)
+  - **Phase watermark**: Changed font to `FONT_NUMBER_MEDIUM` (line 72)
+  - **Layering**: Reordered drawing for watermark on top (lines 624-627)
+  - **Screen wake**: Added backlight control in `_beginSession()`, `_enterComplete()`, `_resetToIdle()`
+
+#### Testing
+- ✅ Build successful on MonkeyC compiler
+- ✅ Loaded and verified on Garmin Venu 3 simulator (454×454px)
+- ✅ Golden ratio layout creates harmonious start screen
+- ✅ Circular pill wraps countdown elegantly
+- ✅ Breathing screen fades in smoothly (1s duration)
+- ✅ Phase watermark fades in on transitions (0.6s duration)
+- ✅ Phase watermark renders on top of all elements
+- ✅ Intro sequence flows naturally ("Get Ready" → "Relax now")
+- ✅ Screen stays awake during entire session
+- ✅ All animations are smooth, polished, and professional
+
+### User Experience Impact
+- **Start screen**: Mathematically balanced layout feels intentional and refined
+- **Phase countdown pill**: No longer lonely - unified crimson design feels purposeful
+- **Pill pulse effect**: Subtle red flash on phase reset provides elegant feedback
+- **Session timer**: Pure red color creates emphasis and matches visual theme
+- **Text readability**: Muted pill countdown text remains readable against crimson
+- **Session start**: Smooth fade-in creates cinematic, premium transition
+- **Intro**: More calming and meditative with "Relax now" message
+- **Phase transitions**: Smoother and less jarring with dual fade effects
+- **Visual hierarchy**: Crystal clear - red timer (important) vs muted pill (subtle)
+- **Usability**: Screen no longer goes dark during breathing session
+- **Overall**: App now feels cohesive, polished, and professionally designed
+
+### Design Philosophy
+v3.6 represents a commitment to **premium design principles**:
+- **Golden ratio** for natural, pleasing proportions
+- **Circular elements** creating visual rhythm (play button, sphere, pill)
+- **Smooth animations** eliminating jarring transitions
+- **Subtle depth** through layered fade effects
+- **Intentional minimalism** - every element serves a purpose
+- **Visual cohesion** - all elements work together harmoniously
+
+---
+
 ## [v3.5.1] - 2025-10-28
 
 ### Interface Refinements

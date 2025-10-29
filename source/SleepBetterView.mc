@@ -2,8 +2,8 @@
 // SleepBetterView.mc
 // 4-7-8 Breathing App - Main View Controller
 // ============================================================================
-// VERSION: v.04 (UI compliance with HTML prototype)
-// TIMESTAMP: 25-1026-13:00
+// VERSION: v3.6
+// TIMESTAMP: 25-1029-12:00
 // DEVICE: Garmin Venu 3 (454×454px)
 // ============================================================================
 //
@@ -69,7 +69,7 @@ class SleepBetterView extends WatchUi.View {
     // Font constants for canvas text rendering
     const FONT_SIZE_TITLE = Gfx.FONT_SMALL;
     const FONT_SIZE_PILL = Gfx.FONT_TINY;
-    const FONT_SIZE_PHASE_WATERMARK = Gfx.FONT_NUMBER_HOT;  // Changed to FONT_NUMBER_HOT
+    const FONT_SIZE_PHASE_WATERMARK = Gfx.FONT_NUMBER_MEDIUM;  // Reduced from FONT_NUMBER_HOT to FONT_NUMBER_MEDIUM
     const FONT_SIZE_COUNTDOWN = Gfx.FONT_MEDIUM;  // Reduced to FONT_MEDIUM for subtlety
     const FONT_SIZE_TIMER = Gfx.FONT_SMALL;
     const FONT_SIZE_PATTERN = Gfx.FONT_TINY;
@@ -96,6 +96,8 @@ class SleepBetterView extends WatchUi.View {
     private var _outroElapsed;
     private var _guideElapsed;
     private var _idleElapsed;
+    private var _phaseChangeFadeIn;  // Track fade-in progress (0.0-1.0)
+    private var _sessionFadeIn;      // Track session fade-in progress (0.0-1.0)
 
     private var _pillText;
     private var _phaseText;
@@ -136,6 +138,8 @@ class SleepBetterView extends WatchUi.View {
         _outroElapsed = 0.0;
         _guideElapsed = GUIDE_DURATION;
         _idleElapsed = 0.0;
+        _phaseChangeFadeIn = 1.0;  // Start fully visible
+        _sessionFadeIn = 0.0;      // Start invisible
 
         _pillText = WatchUi.loadResource(Rez.Strings.TapInstruction);
         _phaseText = WatchUi.loadResource(Rez.Strings.PhasePrepare);
@@ -308,35 +312,35 @@ class SleepBetterView extends WatchUi.View {
             return;
         }
 
-        // HTML Prototype Timeline (~9.7s):
+        // Intro Timeline (~10s):
         // 0.0-0.8s: Play button fadeout
-        // 0.8-7.0s: "Get Ready" with gentle 6s pulse (two 3s cycles)
-        // 7.0-7.9s: Transition period (sphere settles)
-        // 7.9-9.7s: "Inhale" splash
+        // 0.8-5.4s: "Get Ready" with gentle pulse (first half - 4.6s)
+        // 5.4-10.0s: "Relax now" with gentle pulse (second half - 4.6s)
 
         if (_introElapsed < 0.8) {
             // Phase 1: Play button fadeout
             _introMessage = "";
             _currentRadius = _sphereMin;
-        } else if (_introElapsed < 7.0) {
-            // Phase 2: "Get Ready" with gentle 6s pulse (two 3s cycles)
+        } else if (_introElapsed < 5.4) {
+            // Phase 2a: "Get Ready" with gentle pulse (first half - 4.6s)
             _introMessage = WatchUi.loadResource(Rez.Strings.IntroGetReady);
-            var pulseTime = _introElapsed - 0.8;  // 0.8 to 7.0 = 6.2s
-            // Create simple sinusoidal pulse for two 3-second cycles
-            var cycles = (pulseTime / 6.2) * 2.0;  // 0-2 range for two cycles
-            var angle = cycles * Math.PI;  // 0-2π
+            var pulseTime = _introElapsed - 0.8;  // 0.8 to 5.4 = 4.6s
+            // Create simple sinusoidal pulse for one cycle
+            var cycles = (pulseTime / 4.6) * 1.0;  // 0-1 range for one cycle
+            var angle = cycles * Math.PI;  // 0-π
             var wave = (Math.sin(angle) + 1.0) / 2.0;  // 0-1 range, normalized sine
             var eased = EasingFunctions.easeInOutQuad(wave);
             _currentRadius = _sphereMin + ((_sphereMax * 0.55) * eased);  // Gentle pulse to 55% max
-        } else if (_introElapsed < 7.9) {
-            // Phase 3: Transition - sphere settles to min
-            _introMessage = "";
-            var settleRatio = (_introElapsed - 7.0) / 0.9;
-            _currentRadius = _sphereMin + ((_sphereMax * 0.55) * (1.0 - settleRatio));
         } else {
-            // Phase 4: "Inhale" splash
-            _introMessage = WatchUi.loadResource(Rez.Strings.IntroInhale);
-            _currentRadius = _sphereMax * 0.4;
+            // Phase 2b: "Relax now" with gentle pulse (second half - 4.6s)
+            _introMessage = WatchUi.loadResource(Rez.Strings.IntroRelaxNow);
+            var pulseTime = _introElapsed - 5.4;  // 5.4 to 10.0 = 4.6s
+            // Create simple sinusoidal pulse for one cycle
+            var cycles = (pulseTime / 4.6) * 1.0;  // 0-1 range for one cycle
+            var angle = cycles * Math.PI;  // 0-π
+            var wave = (Math.sin(angle) + 1.0) / 2.0;  // 0-1 range, normalized sine
+            var eased = EasingFunctions.easeInOutQuad(wave);
+            _currentRadius = _sphereMin + ((_sphereMax * 0.55) * eased);  // Gentle pulse to 55% max
         }
 
         _pillText = "";  // No pill during intro
@@ -355,6 +359,22 @@ class SleepBetterView extends WatchUi.View {
         _guideElapsed += dt;
         if (_guideElapsed > GUIDE_DURATION) {
             _guideElapsed = GUIDE_DURATION;
+        }
+
+        // Fade in entire breathing screen over 1.0 second
+        if (_sessionFadeIn < 1.0) {
+            _sessionFadeIn += dt / 1.0;
+            if (_sessionFadeIn > 1.0) {
+                _sessionFadeIn = 1.0;
+            }
+        }
+
+        // Fade in phase watermark over 0.6 seconds
+        if (_phaseChangeFadeIn < 1.0) {
+            _phaseChangeFadeIn += dt / 0.6;
+            if (_phaseChangeFadeIn > 1.0) {
+                _phaseChangeFadeIn = 1.0;
+            }
         }
     }
 
@@ -443,6 +463,7 @@ class SleepBetterView extends WatchUi.View {
     private function _handlePhaseChange(phase) {
         _guideElapsed = 0.0;
         _lastPhase = phase;
+        _phaseChangeFadeIn = 0.0;  // Reset fade-in on phase change
     }
 
 
@@ -464,7 +485,13 @@ class SleepBetterView extends WatchUi.View {
         _lastPhase = BreathingPhase.PHASE_INHALE;
         _sessionState = null;
         _guideElapsed = 0.0;
+        _sessionFadeIn = 0.0;  // Start fade-in animation
         _pillText = WatchUi.loadResource(Rez.Strings.PillInhale);
+
+        // Keep screen awake during session
+        if (Attention has :backlight) {
+            Attention.backlight(true);
+        }
     }
 
     private function _enterPause() {
@@ -487,6 +514,11 @@ class SleepBetterView extends WatchUi.View {
         _outroPhase = 0;  // Reset outro phase
         _pillText = WatchUi.loadResource(Rez.Strings.PillComplete);
         _countdownText = "0";
+
+        // Release screen wake lock
+        if (Attention has :backlight) {
+            Attention.backlight(false);
+        }
     }
 
     private function _resetToIdle() {
@@ -504,6 +536,31 @@ class SleepBetterView extends WatchUi.View {
         _countdownText = "0";
         _totalText = "0:00";
         _blockText = "";
+
+        // Release screen wake lock
+        if (Attention has :backlight) {
+            Attention.backlight(false);
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Helper Functions
+
+    // Interpolate between two colors based on progress (0.0-1.0)
+    private function _interpolateColor(colorFrom, colorTo, progress) {
+        var rFrom = (colorFrom >> 16) & 0xFF;
+        var gFrom = (colorFrom >> 8) & 0xFF;
+        var bFrom = colorFrom & 0xFF;
+
+        var rTo = (colorTo >> 16) & 0xFF;
+        var gTo = (colorTo >> 8) & 0xFF;
+        var bTo = colorTo & 0xFF;
+
+        var r = (rFrom + ((rTo - rFrom) * progress)).toNumber();
+        var g = (gFrom + ((gTo - gFrom) * progress)).toNumber();
+        var b = (bFrom + ((bTo - bFrom) * progress)).toNumber();
+
+        return (r << 16) | (g << 8) | b;
     }
 
     // ---------------------------------------------------------------------
@@ -513,10 +570,19 @@ class SleepBetterView extends WatchUi.View {
         dc.setColor(Gfx.COLOR_TRANSPARENT, COLOR_BACKGROUND);
         dc.clear();
 
-        // Skip all graphical objects during INTRO - show only text
-        if (_state != AppState.STATE_INTRO_PULSE) {
-            Effects.drawBackground(dc, _centerX, _centerY, _progressRadius, COLOR_BACKGROUND_ACCENT, COLOR_BACKGROUND);
-            Effects.drawProgressRing(dc, _centerX, _centerY, _progressRadius, _progressThickness, _progressValue, COLOR_RING_TRACK, COLOR_RING_FILL);
+        // Skip all graphical objects during INTRO and IDLE - show only custom UI
+        if (_state != AppState.STATE_INTRO_PULSE && _state != AppState.STATE_IDLE) {
+            // Apply session fade-in effect to all elements
+            var fadeProg = EasingFunctions.easeOutCubic(_sessionFadeIn);
+
+            // Fade background
+            var bgAccentFaded = _interpolateColor(COLOR_BACKGROUND, COLOR_BACKGROUND_ACCENT, fadeProg);
+            Effects.drawBackground(dc, _centerX, _centerY, _progressRadius, bgAccentFaded, COLOR_BACKGROUND);
+
+            // Fade progress ring
+            var ringTrackFaded = _interpolateColor(COLOR_BACKGROUND, COLOR_RING_TRACK, fadeProg);
+            var ringFillFaded = _interpolateColor(COLOR_BACKGROUND, COLOR_RING_FILL, fadeProg);
+            Effects.drawProgressRing(dc, _centerX, _centerY, _progressRadius, _progressThickness, _progressValue, ringTrackFaded, ringFillFaded);
 
             // Breath guide pulse (UI-review.md requirement #6)
             if (_state == AppState.STATE_RUNNING && _guideElapsed < GUIDE_DURATION) {
@@ -525,17 +591,20 @@ class SleepBetterView extends WatchUi.View {
                 if (_sessionState != null && _sessionState["phase"] == BreathingPhase.PHASE_EXHALE) {
                     guideRatio = 1.0 - guideRatio;
                 }
-                Effects.drawGuide(dc, _centerX, _centerY, _currentRadius, guideRatio, COLOR_GUIDE);
+                var guideFaded = _interpolateColor(COLOR_BACKGROUND, COLOR_GUIDE, fadeProg);
+                Effects.drawGuide(dc, _centerX, _centerY, _currentRadius, guideRatio, guideFaded);
             }
 
-            // Draw sphere with enhanced core+rim styling
-            Effects.drawSphere(dc, _centerX, _centerY, _currentRadius, COLOR_SPHERE_CORE, COLOR_SPHERE_RIM);
+            // Fade sphere
+            var sphereCoreFaded = _interpolateColor(COLOR_BACKGROUND, COLOR_SPHERE_CORE, fadeProg);
+            var sphereRimFaded = _interpolateColor(COLOR_BACKGROUND, COLOR_SPHERE_RIM, fadeProg);
+            Effects.drawSphere(dc, _centerX, _centerY, _currentRadius, sphereCoreFaded, sphereRimFaded);
         }
 
         // CLEAN MINIMAL UI - HTML prototype has NO header clutter
         if (_state == AppState.STATE_IDLE) {
-            // Idle: Play button hint
-            Effects.drawPlayHint(dc, _centerX, _centerY, _currentRadius, COLOR_TEXT_PRIMARY);
+            // Idle: Premium start screen
+            _drawIdleScreen(dc);
         } else if (_state == AppState.STATE_INTRO_PULSE) {
             // Intro: Show intro message ONLY
             if (_introMessage != null && _introMessage.length() > 0) {
@@ -551,13 +620,79 @@ class SleepBetterView extends WatchUi.View {
         } else if (_state == AppState.STATE_RUNNING || _state == AppState.STATE_PAUSED) {
             // MINIMAL HUD - Only watermark, countdown, and timers
             // NO title, NO pill, NO extra text at top
-            _drawPhaseWatermark(dc);         // Watermark behind countdown
-            _drawCountdown(dc);              // Countdown number overlay
-            _drawTimers(dc);                 // Timer + pattern with proper spacing
+            // Apply fade-in to text elements
+            var fadeProg = EasingFunctions.easeOutCubic(_sessionFadeIn);
+            _drawCountdown(dc, fadeProg);              // Countdown number (drawn first, behind watermark)
+            _drawTimers(dc, fadeProg);                 // Timer + pattern with proper spacing
+            _drawPhaseWatermark(dc, fadeProg);         // Watermark ON TOP of all other layers
         } else if (_state == AppState.STATE_COMPLETE) {
             // Complete: Simplified outro
             _drawOutro(dc);
         }
+    }
+
+    private function _drawIdleScreen(dc) {
+        // Premium idle screen design using golden ratio (φ ≈ 1.618)
+        // Golden ratio divides screen into harmonious proportions
+        // Upper section: 0.382 (1-0.618) | Lower section: 0.618
+
+        // 1. App title - positioned at golden ratio point from top
+        dc.setColor(COLOR_TEXT_PRIMARY, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            _centerX.toNumber(),
+            (_height * 0.236).toNumber(),  // Golden ratio: 0.382 * 0.618 ≈ 0.236
+            Gfx.FONT_MEDIUM,
+            "SleepBetter",
+            Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+        );
+
+        // 2. Circular play button - positioned at center (natural focal point)
+        var playBtnRadius = _sphereMax * 0.35;  // Smaller, more refined
+        var playBtnRingRadius = playBtnRadius + 15;  // Accent ring
+
+        // Outer accent ring (subtle)
+        dc.setColor(COLOR_RING_FILL, Gfx.COLOR_TRANSPARENT);
+        dc.setPenWidth(2);
+        dc.drawCircle(_centerX.toNumber(), _centerY.toNumber(), playBtnRingRadius.toNumber());
+
+        // Inner play button circle (filled)
+        dc.setColor(COLOR_SPHERE_RIM, Gfx.COLOR_TRANSPARENT);
+        dc.fillCircle(_centerX.toNumber(), _centerY.toNumber(), playBtnRadius.toNumber());
+
+        // Play triangle (centered, refined proportions)
+        var triangleSize = playBtnRadius * 0.5;
+        var triangleLeft = _centerX - (triangleSize * 0.4);
+        var triangleTop = _centerY - (triangleSize * 0.5);
+        var triangleBottom = _centerY + (triangleSize * 0.5);
+
+        var playPoints = [
+            [triangleLeft.toNumber(), triangleTop.toNumber()],
+            [(triangleLeft + triangleSize).toNumber(), _centerY.toNumber()],
+            [triangleLeft.toNumber(), triangleBottom.toNumber()]
+        ];
+
+        dc.setColor(COLOR_BACKGROUND, COLOR_BACKGROUND);
+        dc.fillPolygon(playPoints);
+
+        // 3. "4-7-8 breathing" - positioned at golden ratio point from bottom
+        dc.setColor(COLOR_TEXT_MUTED, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            _centerX.toNumber(),
+            (_height * 0.764).toNumber(),  // Golden ratio: 1 - 0.236 = 0.764
+            Gfx.FONT_SMALL,
+            "4-7-8 breathing",
+            Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+        );
+
+        // 4. Session info - positioned using golden ratio within lower section
+        dc.setColor(COLOR_TEXT_MUTED, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            _centerX.toNumber(),
+            (_height * 0.882).toNumber(),  // 0.764 + (1-0.764)*0.618 ≈ 0.882
+            Gfx.FONT_XTINY,
+            "10 min session",
+            Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+        );
     }
 
     private function _drawPill(dc, text) {
@@ -600,14 +735,21 @@ class SleepBetterView extends WatchUi.View {
         );
     }
 
-    private function _drawPhaseWatermark(dc) {
+    private function _drawPhaseWatermark(dc, sessionFade) {
         // Only show during active session
         if (_state != AppState.STATE_RUNNING && _state != AppState.STATE_PAUSED) {
             return;
         }
 
-        // Phase watermark appears behind countdown - now in pure red
-        dc.setColor(0xFF0000, Gfx.COLOR_TRANSPARENT);  // Pure red instead of COLOR_WATERMARK
+        // Smooth fade-in effect by interpolating from background color to pure red
+        // Background is 0x1B0708, target is 0xFF0000 (pure red)
+        var fadeProgress = EasingFunctions.easeOutCubic(_phaseChangeFadeIn);
+        var phaseFadedColor = _interpolateColor(COLOR_BACKGROUND, 0xFF0000, fadeProgress);
+
+        // Apply session fade-in on top of phase fade-in
+        var finalColor = _interpolateColor(COLOR_BACKGROUND, phaseFadedColor, sessionFade);
+
+        dc.setColor(finalColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             _centerX.toNumber(),
             _centerY.toNumber(),
@@ -617,13 +759,46 @@ class SleepBetterView extends WatchUi.View {
         );
     }
 
-    private function _drawCountdown(dc) {
-        // Large countdown number - moved to bottom position (where pattern label was)
-        // Position below sphere at same location as removed pattern display
+    private function _drawCountdown(dc, sessionFade) {
+        // Premium circular pill design for phase countdown
+        // Position below sphere with refined styling
         var offset = _sphereMax * 1.0;
         var countdownY = _centerY + offset;
 
-        dc.setColor(COLOR_TEXT_MUTED, Gfx.COLOR_TRANSPARENT);  // Muted color for subtlety
+        // Circular pill dimensions (perfectly round)
+        var pillRadius = 28.0;  // Slightly larger for better visibility
+        var pillBorderWidth = 2;
+
+        // Detect zero reset for pulse effect
+        var isZero = (_countdownText != null && _countdownText.equals("0"));
+        var pillBaseColor = COLOR_SPHERE_RIM;  // Default crimson
+        var textBaseColor = COLOR_TEXT_MUTED;  // Muted color for readability
+
+        // Subtle pulse to pure red when countdown resets to zero
+        if (isZero && _sessionState != null) {
+            var phaseProgress = _sessionState["phaseProgress"];
+            // Only pulse at very start of phase (first 15% of duration)
+            if (phaseProgress != null && phaseProgress < 0.15) {
+                var pulseRatio = phaseProgress / 0.15;  // 0 to 1 over first 15%
+                // Shift pill color to pure red at start, then back to normal
+                pillBaseColor = _interpolateColor(0xFF0000, COLOR_SPHERE_RIM, pulseRatio);
+                // Keep text muted for readability (don't change)
+            }
+        }
+
+        // Background circle (filled with border color for cohesive look)
+        var pillBgColor = _interpolateColor(COLOR_BACKGROUND, pillBaseColor, sessionFade);
+        dc.setColor(pillBgColor, Gfx.COLOR_TRANSPARENT);
+        dc.fillCircle(_centerX.toNumber(), countdownY.toNumber(), pillRadius.toNumber());
+
+        // Border ring (same color as fill for unified appearance)
+        dc.setColor(pillBgColor, Gfx.COLOR_TRANSPARENT);
+        dc.setPenWidth(pillBorderWidth);
+        dc.drawCircle(_centerX.toNumber(), countdownY.toNumber(), pillRadius.toNumber());
+
+        // Countdown number (muted color for readability against crimson pill)
+        var textColor = _interpolateColor(COLOR_BACKGROUND, textBaseColor, sessionFade);
+        dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             _centerX.toNumber(),
             countdownY.toNumber(),
@@ -691,7 +866,7 @@ class SleepBetterView extends WatchUi.View {
         _drawSessionTimer(dc);
     }
 
-    private function _drawTimers(dc) {
+    private function _drawTimers(dc, sessionFade) {
         // Position timer and pattern closer to screen edges (40% less whitespace from edge)
         // With sphere max at 160px and screen center at 227px:
         // - Timer at top: 227 - 160 = 67px from top edge
@@ -699,9 +874,10 @@ class SleepBetterView extends WatchUi.View {
         // This gives symmetric 67px margins from screen edges
         var offset = _sphereMax * 1.0;  // Position text at sphere edge for minimal whitespace
 
-        // Session countdown timer (above sphere) - counts DOWN from 10:00 to 0:00
+        // Session countdown timer (above sphere) - counts DOWN from 10:00 to 0:00 in PURE RED
         var totalY = _centerY - offset;
-        dc.setColor(COLOR_TEXT_MUTED, Gfx.COLOR_TRANSPARENT);
+        var fadedColor = _interpolateColor(COLOR_BACKGROUND, 0xFF0000, sessionFade);  // Pure red
+        dc.setColor(fadedColor, Gfx.COLOR_TRANSPARENT);
         var countdownDisplay = _totalText;  // Default to elapsed format
         if (_sessionState != null && _sessionState.hasKey("sessionElapsed") && _sessionState.hasKey("sessionDuration")) {
             countdownDisplay = _formatSessionCountdown(_sessionState["sessionElapsed"], _sessionState["sessionDuration"]);
