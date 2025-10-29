@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v3.5.1] - 2025-10-28
+
+### Interface Refinements
+
+#### Layout Reorganization
+- **Removed pattern label (4-7-8)** from bottom display
+  - Simplifies interface by removing redundant information
+  - Pattern info still visible in top session timer context
+
+- **Repositioned phase countdown** to bottom location
+  - Moved from center to bottom (where pattern label was)
+  - Creates cleaner visual hierarchy with phase watermark in center
+  - Countdown now positioned below breathing sphere
+
+#### Countdown Styling Updates
+- **Reduced countdown font** to `FONT_MEDIUM` for subtlety
+  - Previous: Large number font (`FONT_NUMBER_HOT`)
+  - Now: Standard medium font for less visual weight
+
+- **Changed countdown color** to muted gray
+  - Previous: Bright white (`COLOR_TEXT_PRIMARY`)
+  - Now: Soft gray (`COLOR_TEXT_MUTED` - 0xC9B5B5)
+  - Creates better contrast hierarchy with phase watermark
+
+### Visual Hierarchy (Final)
+- **Top**: Session countdown timer (10:00 → 0:00) in muted gray
+- **Center**: Phase watermark ("INHALE", "HOLD", "EXHALE") in bright red
+- **Bottom**: Phase countdown (0-8) in muted gray, medium font
+- **Removed**: Pattern label no longer displayed
+
+---
+
 ## [v3.5] - 2025-10-28
 
 ### Major UI & Timing Updates

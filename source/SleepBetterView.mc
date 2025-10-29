@@ -70,7 +70,7 @@ class SleepBetterView extends WatchUi.View {
     const FONT_SIZE_TITLE = Gfx.FONT_SMALL;
     const FONT_SIZE_PILL = Gfx.FONT_TINY;
     const FONT_SIZE_PHASE_WATERMARK = Gfx.FONT_NUMBER_HOT;  // Changed to FONT_NUMBER_HOT
-    const FONT_SIZE_COUNTDOWN = Gfx.FONT_NUMBER_THAI_HOT;
+    const FONT_SIZE_COUNTDOWN = Gfx.FONT_MEDIUM;  // Reduced to FONT_MEDIUM for subtlety
     const FONT_SIZE_TIMER = Gfx.FONT_SMALL;
     const FONT_SIZE_PATTERN = Gfx.FONT_TINY;
 
@@ -618,11 +618,15 @@ class SleepBetterView extends WatchUi.View {
     }
 
     private function _drawCountdown(dc) {
-        // Large countdown number in center
-        dc.setColor(COLOR_TEXT_PRIMARY, Gfx.COLOR_TRANSPARENT);
+        // Large countdown number - moved to bottom position (where pattern label was)
+        // Position below sphere at same location as removed pattern display
+        var offset = _sphereMax * 1.0;
+        var countdownY = _centerY + offset;
+
+        dc.setColor(COLOR_TEXT_MUTED, Gfx.COLOR_TRANSPARENT);  // Muted color for subtlety
         dc.drawText(
             _centerX.toNumber(),
-            _centerY.toNumber(),
+            countdownY.toNumber(),
             FONT_SIZE_COUNTDOWN,
             _countdownText,
             Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
@@ -710,17 +714,17 @@ class SleepBetterView extends WatchUi.View {
             Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
         );
 
-        // Pattern display (below sphere) - same offset for symmetry
-        if (_blockText != null && _blockText.length() > 0) {
-            var patternY = _centerY + offset;
-            dc.drawText(
-                _centerX.toNumber(),
-                patternY.toNumber(),
-                FONT_SIZE_PATTERN,
-                _blockText,
-                Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
-            );
-        }
+        // Pattern display (below sphere) - REMOVED: Big countdown moved to this position
+        // if (_blockText != null && _blockText.length() > 0) {
+        //     var patternY = _centerY + offset;
+        //     dc.drawText(
+        //         _centerX.toNumber(),
+        //         patternY.toNumber(),
+        //         FONT_SIZE_PATTERN,
+        //         _blockText,
+        //         Gfx.TEXT_JUSTIFY_CENTER | Gfx.TEXT_JUSTIFY_VCENTER
+        //     );
+        // }
     }
 
     private function _phaseString(phase) {

@@ -33,12 +33,13 @@ Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, ma
 - **Muted text**: #C9B5B5
 - **Countdown white**: #FFFFFF
 
-#### Core UI Components
-- **Breathing sphere**: Scales 0.33x to 1.0x
-- **Progress ring**: 44 radius units
-- **Phase watermark**: Behind sphere
-- **Countdown timer**: Overlaid on sphere
-- **Pattern display**: 4-4-5 format
+#### Core UI Components (v3.5.1 Implementation)
+- **Breathing sphere**: Scales 0.33x to 1.0x (center of screen)
+- **Progress ring**: 44 radius units (around sphere)
+- **Phase watermark**: "INHALE/HOLD/EXHALE" in center (red, FONT_NUMBER_HOT)
+- **Session timer**: Top position, counts DOWN 10:00→0:00 (muted gray)
+- **Phase countdown**: Bottom position, 0-8 display (muted gray, FONT_MEDIUM)
+- **Pattern display**: REMOVED (simplified interface)
 - **Phase pill indicator**: Current breathing phase
 
 ### 3. Interaction Model
