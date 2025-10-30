@@ -5,24 +5,24 @@
 Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, maintaining the minimalist red-themed night interface and single-tap interaction model.
 
 ## Version
-**Current**: v3.7 - Timer Fix + Unified Pill Styling
-**Previous**: v3.6 - Premium Design Release (Golden Ratio + Color Hierarchy)
+**Current**: v3.8 - Start Screen Overhaul + Progress Ring Fix + Screen Wake
+**Previous**: v3.7 - Timer Fix + Unified Pill Styling
 **Target**: v1.0.0 - Initial Release (No haptic, no HR tracking)
 
 ---
 
 ## Core Features
 
-### 0. START SCREEN (v3.6)
-- **Golden ratio layout** for harmonious visual balance
-- App title "SleepBetter" at φ point from top (0.236)
-- Technique name "4-7-8 breathing" at φ point from bottom (0.764)
-- Session duration "10 min session" at nested φ (0.882)
-- **Premium circular play button** in center:
-  - 35% of max sphere size
-  - Crimson filled circle with 2px red accent ring
-  - Centered white play triangle
-- Single tap to start session
+### 0. START SCREEN (v3.8)
+- **Full-screen branded image** (454×454px)
+- Custom-designed start screen with:
+  - "SleepBetter" title with flower logo
+  - "breathe better" subtitle
+  - "click to start" instruction
+- App launcher icon: 80×80px branded icon
+- Single tap anywhere on screen to start session
+- No programmatic text rendering - all visual elements baked into image
+- Perfect transparency and professional appearance
 
 ### 1. Session Structure (v3.7 - Fixed Timing)
 - **Total Duration**: Exactly 10 minutes (600 seconds)
@@ -42,9 +42,12 @@ Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, ma
 - **Muted text**: #C9B5B5
 - **Countdown white**: #FFFFFF
 
-#### Core UI Components (v3.6+ Implementation)
+#### Core UI Components (v3.8 Implementation)
 - **Breathing sphere**: Scales 0.33x to 1.0x (center of screen)
-- **Progress ring**: 44 radius units (around sphere)
+- **Progress ring**: 48.2% of screen width (219px on Venu 3)
+  - Starts at 12 o'clock position (top)
+  - Fills clockwise like an analog clock
+  - Fixed in v3.8: Previously went counter-clockwise from 6 o'clock
 - **Phase watermark**: "INHALE/HOLD/EXHALE" in center (pure red #FF0000, FONT_NUMBER_MEDIUM)
   - Smooth 0.6s fade-in on phase transitions
   - Renders on TOP of all elements
@@ -94,9 +97,13 @@ Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, ma
 5. Heart message reveal (15s)
 
 ### 5. Display Requirements
-- **Always-On**: Screen stays active during entire session
+- **Always-On**: Screen stays active during entire session (v3.8)
+  - Implemented via `onEnterSleep()` returning false during active session
+  - Initial `Attention.backlight(true)` turns on display at session start
+  - Simulator limitation: 1-min backlight API limit (doesn't exist on real hardware)
+  - Real hardware: Screen remains awake for full 10-minute session
 - **AMOLED Optimization**: Pure blacks for battery efficiency
-- **Resolution**: 454×454 pixels
+- **Resolution**: 454×454 pixels (Garmin Venu 3)
 - **Touch Target**: Entire screen is touch-active
 
 ---

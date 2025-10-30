@@ -48,10 +48,11 @@ module Effects {
             dc.setColor(fillColor, Gfx.COLOR_TRANSPARENT);
             dc.setPenWidth(t);
 
-            // Draw arc from top (270 degrees in Garmin = 12 o'clock) clockwise
-            var startAngle = 270;
-            var endAngle = (270 + degrees) % 360;
-            dc.drawArc(x, y, r, Gfx.ARC_CLOCKWISE, startAngle, endAngle);
+            // Draw arc from 12 o'clock (90 degrees in Garmin) going clockwise like analog clock
+            var startAngle = 90;
+            var endAngle = (90 - degrees);  // Subtract to go clockwise
+            if (endAngle < 0) { endAngle += 360; }
+            dc.drawArc(x, y, r, Gfx.ARC_COUNTER_CLOCKWISE, startAngle, endAngle);
         }
     }
 

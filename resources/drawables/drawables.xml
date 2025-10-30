@@ -1,3 +1,4 @@
 <resources>
     <bitmap id="LauncherIcon" filename="launcher.png" />
+    <bitmap id="StartScreen" filename="start_screen.png" />
 </resources>

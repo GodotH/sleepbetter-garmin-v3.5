@@ -1,8 +1,8 @@
 # Device Scaling Documentation
 # 4-7-8 Breathing App - Multi-Device Support
 
-**Version**: v.01-beta
-**Date**: 2025-10-21
+**Version**: v3.8
+**Date**: 2025-10-30
 **Purpose**: Document screen sizes and proportional scaling logic for multi-device support
 
 ---
@@ -68,10 +68,18 @@ _progressThickness = 10.0;              // 10px stroke
 // - Radius: 48.2% of screen width (219/454 = 0.482)
 // - Thickness: 2.2% of screen width (10/454 = 0.022)
 // - Margin: 1.8% from edge (8/454 = 0.018)
+
+// Direction (v3.8):
+// - Starts at 12 o'clock position (top of screen)
+// - Fills clockwise like an analog clock
+// - Uses ARC_COUNTER_CLOCKWISE with reversed angle calculation
+//   (startAngle = 90°, endAngle = 90 - degrees)
 ```
 
 **PRD Note**: PRD mentions "44 radius units" but this is ambiguous.
 Current implementation (48.2% of screen) matches HTML prototype and provides better visual balance.
+
+**v3.8 Update**: Fixed progress ring direction to match intuitive analog clock behavior.
 
 ### Breathing Sphere
 ```monkey
@@ -322,4 +330,5 @@ For each new device:
 ---
 
 **Version History**:
+- v3.8 (2025-10-30): Updated progress ring direction documentation
 - v.01-beta (2025-10-21): Initial scaling documentation for Venu 3

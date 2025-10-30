@@ -347,12 +347,24 @@ class BreathingController {
             var cycleDuration = inhale + hold + exhale;
             if (cycleDuration <= 0.0) { cycleDuration = 1.0; }
 
-            var minutes = _safeFloat(block, "minutes", 1.0);
-            var blockSeconds = minutes * 60.0;
-            if (blockSeconds <= 0.0) { blockSeconds = cycleDuration; }
+            var cycles;
+            // Check if explicit cycle count is provided (overrides minutes calculation)
+            if (block.hasKey("cycles")) {
+                cycles = block["cycles"];
+                if (cycles instanceof Number) {
+                    cycles = cycles.toNumber();
+                } else {
+                    cycles = 1;
+                }
+            } else {
+                // Calculate cycles from minutes
+                var minutes = _safeFloat(block, "minutes", 1.0);
+                var blockSeconds = minutes * 60.0;
+                if (blockSeconds <= 0.0) { blockSeconds = cycleDuration; }
 
-            var cyclesFloat = blockSeconds / cycleDuration;
-            var cycles = Math.round(cyclesFloat).toNumber();
+                var cyclesFloat = blockSeconds / cycleDuration;
+                cycles = Math.round(cyclesFloat).toNumber();
+            }
             if (cycles < 1) { cycles = 1; }
 
             var blockDuration = cycleDuration * cycles;
@@ -392,22 +404,29 @@ class BreathingController {
         return fallback;
     }
 
-    // Default session plan: 1.5min warmup + 1.5min transition + 7.0min main = 10 minutes exact
+    // Default session plan: exactly 600 seconds (10 minutes)
+    // Block 1: 39s (3 cycles × 13s each) - 4-4-5 pattern
+    // Block 2: 105s (7 cycles × 15s each) - 4-5-6 pattern
+    // Block 3: 456s (24 cycles × 19s each) - 4-7-8 pattern
+    // Total: 39 + 105 + 456 = 600 seconds exact
     function getDefaultPlan() {
         return [
             {
                 "label" => "Warm-up 4-4-5",
-                "minutes" => 0.65,
+                "minutes" => 0.65,  // 39 seconds = 3 cycles × 13s
+                "cycles" => 3,      // Force exact cycle count
                 "pattern" => { "inhale" => 4.0, "hold" => 4.0, "exhale" => 5.0 }
             },
             {
                 "label" => "Transition 4-5-6",
-                "minutes" => 1.75,
+                "minutes" => 1.75,  // 105 seconds = 7 cycles × 15s
+                "cycles" => 7,      // Force exact cycle count
                 "pattern" => { "inhale" => 4.0, "hold" => 5.0, "exhale" => 6.0 }
             },
             {
                 "label" => "Main 4-7-8",
-                "minutes" => 7.60,
+                "minutes" => 7.60,  // 456 seconds = 24 cycles × 19s
+                "cycles" => 24,     // Force exact cycle count
                 "pattern" => { "inhale" => 4.0, "hold" => 7.0, "exhale" => 8.0 }
             }
         ];
