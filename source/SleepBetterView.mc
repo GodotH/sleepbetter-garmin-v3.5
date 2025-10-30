@@ -760,8 +760,9 @@ class SleepBetterView extends WatchUi.View {
     }
 
     private function _drawCountdown(dc, sessionFade) {
-        // Premium circular pill design for phase countdown
-        // Position below sphere with refined styling
+        // Phase countdown pill - unified styling with session timer
+        // Black background, red border, red text for visual cohesion
+        // Drop shadow (3px offset) adds subtle depth and visual separation
         var offset = _sphereMax * 1.0;
         var countdownY = _centerY + offset;
 
@@ -769,35 +770,25 @@ class SleepBetterView extends WatchUi.View {
         var pillRadius = 28.0;  // Slightly larger for better visibility
         var pillBorderWidth = 2;
 
-        // Detect zero reset for pulse effect
-        var isZero = (_countdownText != null && _countdownText.equals("0"));
-        var pillBaseColor = COLOR_SPHERE_RIM;  // Default crimson
-        var textBaseColor = COLOR_TEXT_MUTED;  // Muted color for readability
+        // Drop shadow - subtle offset below the pill for depth
+        var shadowOffset = 3;
+        var shadowColor = _interpolateColor(COLOR_BACKGROUND, 0x000000, sessionFade * 0.3);  // 30% opacity shadow
+        dc.setColor(shadowColor, Gfx.COLOR_TRANSPARENT);
+        dc.fillCircle(_centerX.toNumber(), (countdownY + shadowOffset).toNumber(), pillRadius.toNumber());
 
-        // Subtle pulse to pure red when countdown resets to zero
-        if (isZero && _sessionState != null) {
-            var phaseProgress = _sessionState["phaseProgress"];
-            // Only pulse at very start of phase (first 15% of duration)
-            if (phaseProgress != null && phaseProgress < 0.15) {
-                var pulseRatio = phaseProgress / 0.15;  // 0 to 1 over first 15%
-                // Shift pill color to pure red at start, then back to normal
-                pillBaseColor = _interpolateColor(0xFF0000, COLOR_SPHERE_RIM, pulseRatio);
-                // Keep text muted for readability (don't change)
-            }
-        }
-
-        // Background circle (filled with border color for cohesive look)
-        var pillBgColor = _interpolateColor(COLOR_BACKGROUND, pillBaseColor, sessionFade);
+        // Black background circle - matches session timer pill
+        var pillBgColor = _interpolateColor(COLOR_BACKGROUND, 0x000000, sessionFade);  // Pure black
         dc.setColor(pillBgColor, Gfx.COLOR_TRANSPARENT);
         dc.fillCircle(_centerX.toNumber(), countdownY.toNumber(), pillRadius.toNumber());
 
-        // Border ring (same color as fill for unified appearance)
-        dc.setColor(pillBgColor, Gfx.COLOR_TRANSPARENT);
+        // Red border ring - matches session timer pill
+        var pillBorderColor = _interpolateColor(COLOR_BACKGROUND, 0xFF0000, sessionFade);  // Pure red border
+        dc.setColor(pillBorderColor, Gfx.COLOR_TRANSPARENT);
         dc.setPenWidth(pillBorderWidth);
         dc.drawCircle(_centerX.toNumber(), countdownY.toNumber(), pillRadius.toNumber());
 
-        // Countdown number (muted color for readability against crimson pill)
-        var textColor = _interpolateColor(COLOR_BACKGROUND, textBaseColor, sessionFade);
+        // Red text - matches session timer pill
+        var textColor = _interpolateColor(COLOR_BACKGROUND, 0xFF0000, sessionFade);  // Pure red text
         dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             _centerX.toNumber(),
@@ -867,21 +858,42 @@ class SleepBetterView extends WatchUi.View {
     }
 
     private function _drawTimers(dc, sessionFade) {
-        // Position timer and pattern closer to screen edges (40% less whitespace from edge)
-        // With sphere max at 160px and screen center at 227px:
-        // - Timer at top: 227 - 160 = 67px from top edge
-        // - Pattern at bottom: 227 + 160 = 387px from top = 67px from bottom edge
-        // This gives symmetric 67px margins from screen edges
-        var offset = _sphereMax * 1.0;  // Position text at sphere edge for minimal whitespace
+        // Session timer with premium pill styling
+        // Compact horizontal pill with black background and red border
+        // Layered on top of animated rings for maximum visibility
+        // Position timer at sphere edge for minimal whitespace
+        var offset = _sphereMax * 1.0;
 
-        // Session countdown timer (above sphere) - counts DOWN from 10:00 to 0:00 in PURE RED
+        // Session countdown timer (above sphere) - counts DOWN from 10:00 to 0:00
         var totalY = _centerY - offset;
-        var fadedColor = _interpolateColor(COLOR_BACKGROUND, 0xFF0000, sessionFade);  // Pure red
-        dc.setColor(fadedColor, Gfx.COLOR_TRANSPARENT);
         var countdownDisplay = _totalText;  // Default to elapsed format
         if (_sessionState != null && _sessionState.hasKey("sessionElapsed") && _sessionState.hasKey("sessionDuration")) {
             countdownDisplay = _formatSessionCountdown(_sessionState["sessionElapsed"], _sessionState["sessionDuration"]);
         }
+
+        // Timer pill dimensions - balanced proportions
+        // Design: Height provides visual weight, width fits content snugly
+        // Golden ratio: width ~2.5× height for balanced appearance
+        var pillHeight = 40.0;  // Substantial height for visibility (matches font + padding)
+        var pillWidth = 100.0;  // Compact width fitting "10:00" comfortably (2.5× height ratio)
+        var pillX = _centerX - (pillWidth / 2.0);
+        var pillY = totalY - (pillHeight / 2.0);
+        var radius = pillHeight / 2.0;  // Fully rounded ends
+
+        // Black background pill (layered on top of animated rings)
+        var pillBgColor = _interpolateColor(COLOR_BACKGROUND, 0x000000, sessionFade);  // Pure black
+        dc.setColor(pillBgColor, Gfx.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(pillX.toNumber(), pillY.toNumber(), pillWidth.toNumber(), pillHeight.toNumber(), radius.toNumber());
+
+        // Red border ring
+        var pillBorderColor = _interpolateColor(COLOR_BACKGROUND, 0xFF0000, sessionFade);  // Pure red border
+        dc.setColor(pillBorderColor, Gfx.COLOR_TRANSPARENT);
+        dc.setPenWidth(2);
+        dc.drawRoundedRectangle(pillX.toNumber(), pillY.toNumber(), pillWidth.toNumber(), pillHeight.toNumber(), radius.toNumber());
+
+        // Timer text in pure red
+        var textColor = _interpolateColor(COLOR_BACKGROUND, 0xFF0000, sessionFade);  // Pure red text
+        dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             _centerX.toNumber(),
             totalY.toNumber(),

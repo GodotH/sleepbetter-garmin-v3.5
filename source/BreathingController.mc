@@ -12,15 +12,15 @@
 //   Manages session plan execution with configurable breathing patterns.
 //
 // CURRENT SESSION PLAN (v.03):
-//   - Block 1: 1.5 min / 90s (4-4-5 pattern, 6 cycles)
-//   - Block 2: 1.5 min / 90s (4-5-6 pattern, 6 cycles)
-//   - Block 3: 7.0 min / 420s (4-7-8 pattern, 22 cycles)
+//   - Block 1: 0.65 min / 39s (4-4-5 pattern, 3 cycles)
+//   - Block 2: 1.75 min / 105s (4-5-6 pattern, 7 cycles)
+//   - Block 3: 7.60 min / 456s (4-7-8 pattern, 24 cycles)
 //   - Total: 10.00 minutes / 600 seconds exactly
 //
 // TIMING BREAKDOWN:
-//   - 4-4-5: 13s/cycle × 6 = 78s (actual 90s block = ~7 cycles)
-//   - 4-5-6: 15s/cycle × 6 = 90s (exact fit)
-//   - 4-7-8: 19s/cycle × 22 = 418s (actual 420s block = ~22 cycles)
+//   - 4-4-5: 13s/cycle × 3 = 39s (exactly 0.65 min)
+//   - 4-5-6: 15s/cycle × 7 = 105s (exactly 1.75 min)
+//   - 4-7-8: 19s/cycle × 24 = 456s (exactly 7.60 min)
 //
 // ============================================================================
 
@@ -352,7 +352,7 @@ class BreathingController {
             if (blockSeconds <= 0.0) { blockSeconds = cycleDuration; }
 
             var cyclesFloat = blockSeconds / cycleDuration;
-            var cycles = Math.floor(cyclesFloat).toNumber();
+            var cycles = Math.round(cyclesFloat).toNumber();
             if (cycles < 1) { cycles = 1; }
 
             var blockDuration = cycleDuration * cycles;
@@ -397,17 +397,17 @@ class BreathingController {
         return [
             {
                 "label" => "Warm-up 4-4-5",
-                "minutes" => 1.5,
+                "minutes" => 0.65,
                 "pattern" => { "inhale" => 4.0, "hold" => 4.0, "exhale" => 5.0 }
             },
             {
                 "label" => "Transition 4-5-6",
-                "minutes" => 1.5,
+                "minutes" => 1.75,
                 "pattern" => { "inhale" => 4.0, "hold" => 5.0, "exhale" => 6.0 }
             },
             {
                 "label" => "Main 4-7-8",
-                "minutes" => 7.0,
+                "minutes" => 7.60,
                 "pattern" => { "inhale" => 4.0, "hold" => 7.0, "exhale" => 8.0 }
             }
         ];
