@@ -2,6 +2,83 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v3.7] - 2025-10-30
+
+### Critical Fixes
+
+#### 10-Minute Timer Fix
+- **Fixed session timer displaying 9:46 instead of 10:00**
+  - Root cause: `Math.floor()` truncated partial cycles, losing 14 seconds
+  - Solution: Changed to `Math.round()` for accurate cycle rounding
+  - Restored original timing values: 0.65 + 1.75 + 7.60 = **10.00 minutes exactly**
+  - Session now shows **600 seconds (10:00)** precisely
+  - Calculation breakdown:
+    - Block 1 (Warm-up): 0.65 min = 39s (4-4-5 pattern, 3 cycles)
+    - Block 2 (Transition): 1.75 min = 105s (4-5-6 pattern, 7 cycles)
+    - Block 3 (Main): 7.60 min = 456s (4-7-8 pattern, 24 cycles)
+
+### Design Improvements
+
+#### Session Timer Pill (Top)
+- **Improved proportions** following UI design principles:
+  - Changed from 30% width (136px) × 32px height (bad: 4.25:1 ratio, stretched)
+  - To 100px width × 40px height (good: 2.5:1 ratio, balanced)
+  - Compact width fits "10:00" content snugly
+  - Substantial height provides visual weight
+  - Fully rounded ends (radius = height/2)
+- **Styling**:
+  - Black background (#000000)
+  - Pure red border (2px, #FF0000)
+  - Pure red text (#FF0000)
+  - Layered on top of animated rings for maximum visibility
+
+#### Phase Countdown Pill (Bottom) - Unified Styling
+- **Changed from crimson styling to match session timer**:
+  - Background: Crimson fill → **Black (#000000)**
+  - Text: Black → **Pure red (#FF0000)**
+  - Border: Crimson → **Pure red (#FF0000)**
+  - Retained drop shadow (3px offset) for depth
+- **Visual cohesion**: Both pills now share identical color scheme
+  - Creates professional, consistent design language
+  - Clear hierarchy through positioning, not color variation
+  - Unified red-on-black theme throughout interface
+
+### Technical Implementation
+
+#### Files Modified
+- `source/BreathingController.mc`:
+  - Changed `Math.floor()` to `Math.round()` in cycle calculation (line 355)
+  - Restored timing: 0.65, 1.75, 7.60 minutes in `getDefaultPlan()`
+  - Updated documentation comments with correct timing breakdown
+
+- `source/SleepBetterView.mc`:
+  - Session timer pill: Improved proportions (100×40px, lines 893-894)
+  - Session timer pill: Black bg, red border, red text (lines 899-905)
+  - Phase countdown pill: Unified styling with timer (lines 779-792)
+  - Added comprehensive code comments documenting design decisions
+
+- `PRD.md`:
+  - Updated version to v3.7
+  - Corrected session structure timing (lines 27-34)
+  - Updated UI component specifications (lines 49-61)
+
+### User Experience Impact
+- **Timer accuracy**: Session now runs exactly 10:00 as intended
+- **Visual balance**: Pills have proper proportions, not stretched or thin
+- **Design cohesion**: Unified styling creates professional appearance
+- **Readability**: Red text on black background has excellent contrast
+- **Hierarchy**: Both pills stand out clearly against dark interface
+
+### Testing
+- ✅ Build successful on MonkeyC compiler
+- ✅ Verified on Garmin Venu 3 simulator (454×454px)
+- ✅ Session duration: Exactly 600 seconds (10:00)
+- ✅ Timer pill proportions: Balanced 2.5:1 ratio
+- ✅ Unified styling: Both pills match perfectly
+- ✅ All animations smooth and professional
+
+---
+
 ## [v3.6] - 2025-10-29
 
 ### Major UX & Visual Enhancements

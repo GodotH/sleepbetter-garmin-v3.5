@@ -5,7 +5,8 @@
 Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, maintaining the minimalist red-themed night interface and single-tap interaction model.
 
 ## Version
-**Current**: v3.6 - Premium Design Release (Golden Ratio + Color Hierarchy)
+**Current**: v3.7 - Timer Fix + Unified Pill Styling
+**Previous**: v3.6 - Premium Design Release (Golden Ratio + Color Hierarchy)
 **Target**: v1.0.0 - Initial Release (No haptic, no HR tracking)
 
 ---
@@ -23,13 +24,14 @@ Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, ma
   - Centered white play triangle
 - Single tap to start session
 
-### 1. Session Structure
-- **Total Duration**: 10 minutes
+### 1. Session Structure (v3.7 - Fixed Timing)
+- **Total Duration**: Exactly 10 minutes (600 seconds)
 - **Phases**:
-  1. **Warm-up**: 1.5 minutes (4-4-5 pattern)
-  2. **Transition**: 1.5 minutes (4-5-6 pattern)
-  3. **Main**: 7 minutes (4-7-8 pattern)
+  1. **Warm-up**: 0.65 minutes / 39s (4-4-5 pattern, 3 cycles)
+  2. **Transition**: 1.75 minutes / 105s (4-5-6 pattern, 7 cycles)
+  3. **Main**: 7.60 minutes / 456s (4-7-8 pattern, 24 cycles)
 - **Pattern Format**: Inhale-Hold-Exhale seconds
+- **Cycle Calculation**: Uses Math.round() for accurate timing (600s exactly)
 
 ### 2. Visual Elements
 

@@ -2,19 +2,21 @@
 
 ## Project Overview
 
-**SleepBetter** is a Garmin Connect IQ app implementing the 4-7-8 breathing technique for the Garmin Venu 3 smartwatch (454×454px AMOLED display). The app provides a minimalist, red-themed night interface with animated breathing guidance through a 10-minute structured session featuring premium design principles including golden ratio layout and smooth cinematic transitions.
+**SleepBetter** is a Garmin Connect IQ app implementing the 4-7-8 breathing technique for the Garmin Venu 3 smartwatch (454×454px AMOLED display). The app provides a minimalist, red-themed night interface with animated breathing guidance through a 10-minute structured session featuring premium design principles including golden ratio layout, unified pill styling, and smooth cinematic transitions.
 
-**Current Version**: v3.6
+**Current Version**: v3.7
 **Language**: MonkeyC (Garmin's proprietary language)
 **Target Device**: Garmin Venu 3 (454×454 resolution)
 **Development Platform**: Windows with Garmin Connect IQ SDK
 
-**Design Highlights (v3.6)**:
+**Design Highlights (v3.7)**:
 - Golden ratio-based layout for natural visual harmony
-- Circular pill design for phase countdown
+- Unified pill styling (black background, red border, red text)
+- Balanced proportions (session timer: 100×40px, 2.5:1 ratio)
 - 1-second cinematic fade-in for breathing screen
 - Smooth 0.6s phase watermark transitions
 - Screen wake lock during active sessions
+- Exactly 10:00 minute session (600 seconds precise)
 
 ---
 
@@ -165,33 +167,42 @@ git push origin main
 
 ---
 
-## Current Implementation (v3.6)
+## Current Implementation (v3.7)
 
-### Session Timing
-- **Block 1 (Warmup)**: 1.5 minutes - 4-4-5 pattern (6 cycles)
-- **Block 2 (Transition)**: 1.5 minutes - 4-5-6 pattern (6 cycles)
-- **Block 3 (Main)**: 7.0 minutes - 4-7-8 pattern (22 cycles)
-- **Total**: ~9.77 minutes (586 seconds)
+### Session Timing (Fixed in v3.7)
+- **Block 1 (Warmup)**: 0.65 minutes / 39s - 4-4-5 pattern (3 cycles)
+- **Block 2 (Transition)**: 1.75 minutes / 105s - 4-5-6 pattern (7 cycles)
+- **Block 3 (Main)**: 7.60 minutes / 456s - 4-7-8 pattern (24 cycles)
+- **Total**: Exactly 10.00 minutes (600 seconds)
+- **Cycle Calculation**: Uses `Math.round()` for accurate rounding
 
-### Visual Hierarchy
+### Visual Hierarchy (v3.7 - Unified Pill Styling)
 ```
 ┌─────────────────────────────────┐
-│   SESSION TIMER (top)           │  ← 10:00→0:00 (pure red #FF0000, FONT_SMALL)
+│   ┌─────────────┐               │  ← Session Timer Pill (100×40px)
+│   │    10:00    │               │     Black bg, red border, red text
+│   └─────────────┘               │
 │                                 │
 │   PHASE WATERMARK (center)      │  ← INHALE/HOLD/EXHALE (red, FONT_NUMBER_MEDIUM)
 │   ● BREATHING SPHERE            │  ← Scales 0.33x-1.0x with progress ring
 │                                 │
-│   PHASE COUNTDOWN PILL (bottom) │  ← 0-8 in circular pill (muted, with pulse)
+│      ┌───┐                      │  ← Phase Countdown Pill (28px radius)
+│      │ 0 │                      │     Black bg, red border, red text
+│      └───┘                      │     Drop shadow (3px offset)
+│       ╰─╯                       │
 └─────────────────────────────────┘
 ```
 
-### Color Hierarchy (v3.6)
+### Color Hierarchy (v3.7 - Unified Pill Styling)
 - **Background**: Pure black (0x000000) for AMOLED efficiency
-- **Phase Watermark**: Pure red (0xFF0000) - high emphasis, smaller font (FONT_NUMBER_MEDIUM)
-- **Session Timer**: Pure red (0xFF0000) - high visibility and emphasis
+- **Both Pills**: Unified styling for visual cohesion
+  - Background: Pure black (0x000000)
+  - Border: Pure red (0xFF0000, 2px)
+  - Text: Pure red (0xFF0000)
+- **Phase Watermark**: Pure red (0xFF0000) - high emphasis (FONT_NUMBER_MEDIUM)
 - **Breathing Sphere**: Dark red (0x8B0000)
 - **Progress Ring**: Crimson red
-- **Countdown Pill**: Crimson fill + border, muted text (0xC9B5B5) for readability
+- **Drop Shadow**: Black (0x000000, 30% opacity, 3px offset) - phase countdown only
 - **Text Primary**: Light gray (0xF6ECEC)
 
 ### Font Sizes (Garmin System Fonts)
