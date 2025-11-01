@@ -98,7 +98,7 @@ class SleepBetterView extends WatchUi.View {
     private var _idleElapsed;
     private var _phaseChangeFadeIn;  // Track fade-in progress (0.0-1.0)
     private var _sessionFadeIn;      // Track session fade-in progress (0.0-1.0)
-    private var _backlightRefreshTimer;  // Timer to refresh backlight every 3s (battery efficient)
+    private var _backlightRefreshTimer;  // Timer to refresh backlight periodically (screen wake)
 
     private var _pillText;
     private var _phaseText;
@@ -367,9 +367,24 @@ class SleepBetterView extends WatchUi.View {
     }
 
     private function _updateRunning(dt) {
-        // NOTE: Backlight refresh removed - simulator has 1-minute limit
-        // onEnterSleep() preventing sleep is sufficient for screen wake
-        // On real hardware, initial backlight(true) in _beginSession() works fine
+        // Ultra-aggressive backlight refresh to prevent screen dimming
+        // Strategy: Call backlight(true) every 5 seconds
+        // - Eliminates even brief 1-second dim phases
+        // - Keeps screen consistently bright throughout entire session
+        // - Exception handling for BacklightOnTooLongException (burn-in protection)
+        // - Graceful degradation: catches exceptions and continues
+        _backlightRefreshTimer += dt;
+        if (_backlightRefreshTimer >= 5.0) {
+            try {
+                Attention.backlight(true);
+                _backlightRefreshTimer = 0.0;
+            } catch (ex) {
+                // Catch BacklightOnTooLongException (burn-in protection)
+                // Also handles simulator's 1-min cumulative limit
+                // Reset timer to retry - exception is expected and harmless
+                _backlightRefreshTimer = 0.0;
+            }
+        }
 
         var state = _controller.advance(dt);
         if (state != null) {

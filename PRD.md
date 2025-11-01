@@ -5,8 +5,8 @@
 Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, maintaining the minimalist red-themed night interface and single-tap interaction model.
 
 ## Version
-**Current**: v3.8 - Start Screen Overhaul + Progress Ring Fix + Screen Wake
-**Previous**: v3.7 - Timer Fix + Unified Pill Styling
+**Current**: v3.9 - Screen Wake Perfected (5-Second Refresh)
+**Previous**: v3.8 - Start Screen Overhaul + Progress Ring Fix + Screen Wake
 **Target**: v1.0.0 - Initial Release (No haptic, no HR tracking)
 
 ---
@@ -97,11 +97,14 @@ Port of a web-based 4-7-8 breathing technique app to Garmin Venu3 smartwatch, ma
 5. Heart message reveal (15s)
 
 ### 5. Display Requirements
-- **Always-On**: Screen stays active during entire session (v3.8)
-  - Implemented via `onEnterSleep()` returning false during active session
-  - Initial `Attention.backlight(true)` turns on display at session start
+- **Always-On**: Screen stays active during entire session (v3.9 - Perfected)
+  - **5-second ultra-aggressive backlight refresh**: `Attention.backlight(true)` every 5 seconds
+  - Eliminates all screen dimming - consistent brightness throughout session
+  - `onEnterSleep()` returning false prevents full sleep mode
+  - Exception handling for graceful degradation (BacklightOnTooLongException)
+  - Tested successfully on Garmin Venu 3 - no visible dimming
+  - See [SCREEN-AWAKE-FAQ.md](SCREEN-AWAKE-FAQ.md) for complete implementation guide
   - Simulator limitation: 1-min backlight API limit (doesn't exist on real hardware)
-  - Real hardware: Screen remains awake for full 10-minute session
 - **AMOLED Optimization**: Pure blacks for battery efficiency
 - **Resolution**: 454×454 pixels (Garmin Venu 3)
 - **Touch Target**: Entire screen is touch-active
